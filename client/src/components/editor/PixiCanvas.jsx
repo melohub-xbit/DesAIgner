@@ -61,10 +61,6 @@ const PixiCanvas = ({ projectId }) => {
     canvasRef.current.appendChild(app.view);
     appRef.current = app;
 
-    // Setup interaction
-    app.stage.interactive = true;
-    app.stage.hitArea = app.screen;
-
     setupCanvasInteraction();
 
     // Handle resize
@@ -78,6 +74,10 @@ const PixiCanvas = ({ projectId }) => {
 
   const setupCanvasInteraction = () => {
     const stage = appRef.current.stage;
+
+    // Enable interaction on stage
+    stage.eventMode = "static";
+    stage.hitArea = appRef.current.screen;
 
     // Mouse/touch events
     stage.on("pointerdown", handlePointerDown);
@@ -255,29 +255,30 @@ const PixiCanvas = ({ projectId }) => {
 
       if (element.type === "rectangle") {
         pixiObject = new Graphics();
-        pixiObject.beginFill(element.fill || 0x000000);
+        pixiObject.rect(0, 0, element.width, element.height);
+        pixiObject.fill(element.fill || 0x000000);
         if (element.strokeWidth > 0) {
-          pixiObject.lineStyle(element.strokeWidth, element.stroke || 0x000000);
+          pixiObject.stroke({
+            width: element.strokeWidth,
+            color: element.stroke || 0x000000,
+          });
         }
-        pixiObject.drawRect(0, 0, element.width, element.height);
-        pixiObject.endFill();
       } else if (element.type === "circle") {
         pixiObject = new Graphics();
         const radius = element.width / 2;
-        pixiObject.beginFill(element.fill || 0x000000);
+        pixiObject.circle(radius, radius, radius);
+        pixiObject.fill(element.fill || 0x000000);
         if (element.strokeWidth > 0) {
-          pixiObject.lineStyle(element.strokeWidth, element.stroke || 0x000000);
+          pixiObject.stroke({
+            width: element.strokeWidth,
+            color: element.stroke || 0x000000,
+          });
         }
-        pixiObject.drawCircle(radius, radius, radius);
-        pixiObject.endFill();
       } else if (element.type === "text") {
-        pixiObject = new Text({
-          text: element.text || "Text",
-          style: {
-            fontSize: element.fontSize || 24,
-            fontFamily: element.fontFamily || "Arial",
-            fill: element.fill || "#000000",
-          },
+        pixiObject = new Text(element.text || "Text", {
+          fontSize: element.fontSize || 24,
+          fontFamily: element.fontFamily || "Arial",
+          fill: element.fill || "#000000",
         });
       }
 
@@ -285,12 +286,14 @@ const PixiCanvas = ({ projectId }) => {
         pixiObject.position.set(element.x, element.y);
         pixiObject.rotation = element.rotation || 0;
         pixiObject.alpha = element.opacity || 1;
+        pixiObject.eventMode = "static";
+        pixiObject.cursor = "pointer";
 
         // Selection highlight
         if (selectedIds.includes(element.id)) {
           const bounds = new Graphics();
-          bounds.lineStyle(2, 0x3b82f6);
-          bounds.drawRect(-2, -2, element.width + 4, element.height + 4);
+          bounds.rect(-2, -2, element.width + 4, element.height + 4);
+          bounds.stroke({ width: 2, color: 0x3b82f6 });
           pixiObject.addChild(bounds);
         }
 
