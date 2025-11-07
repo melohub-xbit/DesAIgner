@@ -16,7 +16,10 @@ const GRID_MINOR = 25;
 const Editor = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore((state) => ({
+    user: state.user,
+    token: state.token,
+  }));
   const {
     elements,
     setElements,
@@ -31,6 +34,10 @@ const Editor = () => {
   const saveTimeoutRef = useRef(null);
 
   useEffect(() => {
+    if (!token) {
+      return;
+    }
+
     loadProject();
     setupSocketListeners();
 
@@ -124,10 +131,11 @@ const Editor = () => {
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      setActiveUsers([]);
       socketService.leaveProject(projectId);
       socketService.disconnect();
     };
-  }, [projectId]);
+  }, [projectId, token]);
 
   useEffect(() => {
     // Auto-save on element changes
@@ -150,8 +158,10 @@ const Editor = () => {
       setCanvasSettings(data.project.canvasSettings || {});
 
       // Connect to socket
-      socketService.connect();
-      socketService.joinProject(projectId, user);
+      if (token) {
+        socketService.connect(token);
+        socketService.joinProject(projectId, token);
+      }
 
       setLoading(false);
     } catch (error) {
@@ -161,7 +171,9 @@ const Editor = () => {
   };
 
   const setupSocketListeners = () => {
-    const socket = socketService.connect();
+    if (!token) return;
+
+    const socket = socketService.connect(token);
 
     socket.on("active-users", (users) => {
       setActiveUsers(users);

@@ -6,7 +6,17 @@ const elementSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["rectangle", "circle", "text", "image", "line", "polygon"],
+      enum: [
+        "rectangle",
+        "circle",
+        "triangle",
+        "arrow",
+        "line",
+        "freehand",
+        "text",
+        "image",
+        "polygon",
+      ],
     },
     x: { type: Number, default: 0 },
     y: { type: Number, default: 0 },
@@ -23,10 +33,12 @@ const elementSchema = new mongoose.Schema(
     fontSize: { type: Number, default: 16 },
     fontFamily: { type: String, default: "Arial" },
     src: { type: String, default: "" },
-    points: [Number],
+    points: { type: [mongoose.Schema.Types.Mixed], default: undefined },
     zIndex: { type: Number, default: 0 },
     locked: { type: Boolean, default: false },
     visible: { type: Boolean, default: true },
+    blendMode: { type: String, default: "normal" },
+    effects: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
   { _id: false }
 );

@@ -105,16 +105,14 @@ router.get("/:id", auth, async (req, res) => {
       .populate("owner", "username email avatar")
       .populate("collaborators.user", "username email avatar");
 
-    if (!project)
-      return res.status(404).json({ error: "Project not found" });
+    if (!project) return res.status(404).json({ error: "Project not found" });
 
     const hasAccess =
       project.owner._id.equals(req.user._id) ||
       project.collaborators.some((c) => c.user._id.equals(req.user._id)) ||
       project.isPublic;
 
-    if (!hasAccess)
-      return res.status(403).json({ error: "Access denied" });
+    if (!hasAccess) return res.status(403).json({ error: "Access denied" });
 
     res.json({ project });
   } catch (error) {
@@ -146,9 +144,7 @@ router.post("/", auth, async (req, res) => {
 
     await project.populate("owner", "username email avatar");
 
-    res
-      .status(201)
-      .json({ project, message: "Project created successfully" });
+    res.status(201).json({ project, message: "Project created successfully" });
   } catch (error) {
     console.error("Create project error:", error);
     res.status(500).json({ error: "Failed to create project" });
@@ -161,8 +157,7 @@ router.post("/", auth, async (req, res) => {
 router.put("/:id", auth, async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-    if (!project)
-      return res.status(404).json({ error: "Project not found" });
+    if (!project) return res.status(404).json({ error: "Project not found" });
 
     const isOwner = project.owner.equals(req.user._id);
     const isEditor = project.collaborators.some(
@@ -199,8 +194,7 @@ router.put("/:id", auth, async (req, res) => {
 router.delete("/:id", auth, async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-    if (!project)
-      return res.status(404).json({ error: "Project not found" });
+    if (!project) return res.status(404).json({ error: "Project not found" });
 
     if (!project.owner.equals(req.user._id))
       return res.status(403).json({ error: "Only owner can delete project" });
@@ -221,15 +215,15 @@ router.post("/:id/collaborators", auth, async (req, res) => {
     const { email, role } = req.body;
     const project = await Project.findById(req.params.id);
 
-    if (!project)
-      return res.status(404).json({ error: "Project not found" });
+    if (!project) return res.status(404).json({ error: "Project not found" });
 
     if (!project.owner.equals(req.user._id))
-      return res.status(403).json({ error: "Only owner can add collaborators" });
+      return res
+        .status(403)
+        .json({ error: "Only owner can add collaborators" });
 
     const collaborator = await User.findOne({ email });
-    if (!collaborator)
-      return res.status(404).json({ error: "User not found" });
+    if (!collaborator) return res.status(404).json({ error: "User not found" });
 
     const already = project.collaborators.some((c) =>
       c.user.equals(collaborator._id)
@@ -241,18 +235,139 @@ router.post("/:id/collaborators", auth, async (req, res) => {
       user: collaborator._id,
       role: role || "editor",
     });
+    project.version += 1;
     await project.save();
 
     await User.findByIdAndUpdate(collaborator._id, {
       $addToSet: { projects: project._id },
     });
 
-    await project.populate("collaborators.user", "username email avatar");
+    await project.populate([
+      { path: "owner", select: "username email avatar" },
+      { path: "collaborators.user", select: "username email avatar" },
+    ]);
 
     res.json({ project, message: "Collaborator added successfully" });
   } catch (error) {
     console.error("Add collaborator error:", error);
     res.status(500).json({ error: "Failed to add collaborator" });
+  }
+});
+
+// ========================
+// Update collaborator role (owner/admin)
+// ========================
+router.patch("/:id/collaborators/:collaboratorId", auth, async (req, res) => {
+  try {
+    const { role } = req.body;
+    const allowedRoles = ["viewer", "editor", "admin"];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ error: "Invalid role" });
+    }
+
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    const isOwner = project.owner.equals(req.user._id);
+    const isAdmin = project.collaborators.some(
+      (c) => c.user.equals(req.user._id) && c.role === "admin"
+    );
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const collaborator = project.collaborators.find((c) =>
+      c.user.equals(req.params.collaboratorId)
+    );
+
+    if (!collaborator) {
+      return res.status(404).json({ error: "Collaborator not found" });
+    }
+
+    if (project.owner.equals(collaborator.user)) {
+      return res.status(400).json({ error: "Cannot change owner role" });
+    }
+
+    if (!isOwner && role === "admin") {
+      return res
+        .status(403)
+        .json({ error: "Only owner can promote collaborators to admin" });
+    }
+
+    collaborator.role = role;
+    project.version += 1;
+    await project.save();
+    await project.populate([
+      { path: "owner", select: "username email avatar" },
+      { path: "collaborators.user", select: "username email avatar" },
+    ]);
+
+    res.json({ project, message: "Collaborator role updated" });
+  } catch (error) {
+    console.error("Update collaborator role error:", error);
+    res.status(500).json({ error: "Failed to update collaborator role" });
+  }
+});
+
+// ========================
+// Remove collaborator (owner/admin)
+// ========================
+router.delete("/:id/collaborators/:collaboratorId", auth, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    const isOwner = project.owner.equals(req.user._id);
+    const isAdmin = project.collaborators.some(
+      (c) => c.user.equals(req.user._id) && c.role === "admin"
+    );
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const collaboratorIndex = project.collaborators.findIndex((c) =>
+      c.user.equals(req.params.collaboratorId)
+    );
+
+    if (collaboratorIndex === -1) {
+      return res.status(404).json({ error: "Collaborator not found" });
+    }
+
+    const collaborator = project.collaborators[collaboratorIndex];
+
+    if (project.owner.equals(collaborator.user)) {
+      return res.status(400).json({ error: "Cannot remove project owner" });
+    }
+
+    if (!isOwner && collaborator.role === "admin") {
+      return res
+        .status(403)
+        .json({ error: "Only owner can remove another admin" });
+    }
+
+    project.collaborators.splice(collaboratorIndex, 1);
+    project.version += 1;
+    await project.save();
+
+    await User.findByIdAndUpdate(collaborator.user, {
+      $pull: { projects: project._id },
+    });
+
+    await project.populate([
+      { path: "owner", select: "username email avatar" },
+      { path: "collaborators.user", select: "username email avatar" },
+    ]);
+
+    res.json({ project, message: "Collaborator removed" });
+  } catch (error) {
+    console.error("Remove collaborator error:", error);
+    res.status(500).json({ error: "Failed to remove collaborator" });
   }
 });
 

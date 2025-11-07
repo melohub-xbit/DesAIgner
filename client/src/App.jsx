@@ -11,6 +11,17 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Editor from "./pages/Editor";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Home from "./pages/Home";
+import ProjectSettings from "./pages/ProjectSettings";
+
+const RootRedirect = () => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  return isAuthenticated ? (
+    <Navigate to="/dashboard" replace />
+  ) : (
+    <Navigate to="/home" replace />
+  );
+};
 
 function App() {
   return (
@@ -44,7 +55,16 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          path="/projects/:projectId/settings"
+          element={
+            <ProtectedRoute>
+              <ProjectSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/home" element={<Home />} />
+        <Route path="/" element={<RootRedirect />} />
       </Routes>
     </Router>
   );

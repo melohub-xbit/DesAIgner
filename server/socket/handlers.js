@@ -6,6 +6,22 @@ const User = require("../models/User");
 // Track active users per project room
 const activeUsers = new Map();
 
+const formatActiveUsersForBroadcast = (projectId) => {
+  if (!activeUsers.has(projectId)) {
+    return [];
+  }
+  return Array.from(activeUsers.get(projectId).entries()).map(
+    ([socketId, data]) => ({ socketId, ...data })
+  );
+};
+
+const broadcastActiveUsers = (io, projectId) => {
+  io.to(projectId).emit(
+    "active-users",
+    formatActiveUsersForBroadcast(projectId)
+  );
+};
+
 const setupSocketHandlers = (io) => {
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
@@ -28,8 +44,7 @@ const setupSocketHandlers = (io) => {
           project.collaborators.some((c) => c.user.equals(user._id)) ||
           project.isPublic;
 
-        if (!allowed)
-          return socket.emit("error", { error: "Access denied" });
+        if (!allowed) return socket.emit("error", { error: "Access denied" });
 
         // Join room
         socket.join(projectId);
@@ -55,12 +70,8 @@ const setupSocketHandlers = (io) => {
           },
         });
 
-        // Send current active users list to new joiner
-        const users = Array.from(activeUsers.get(projectId).values());
-        socket.emit(
-          "active-users",
-          users.filter((u) => u.id.toString() !== user._id.toString())
-        );
+        // Broadcast updated active users list to room
+        broadcastActiveUsers(io, projectId);
 
         console.log(`✅ ${user.username} joined project ${projectId}`);
       } catch (err) {
@@ -71,7 +82,7 @@ const setupSocketHandlers = (io) => {
 
     // Leave project room
     socket.on("leave-project", ({ projectId }) => {
-      handleUserLeave(socket, projectId);
+      handleUserLeave(io, socket, projectId);
     });
 
     // Element operations
@@ -169,7 +180,7 @@ const setupSocketHandlers = (io) => {
       console.log("User disconnected:", socket.id);
       activeUsers.forEach((users, projectId) => {
         if (users.has(socket.id)) {
-          handleUserLeave(socket, projectId);
+          handleUserLeave(io, socket, projectId);
         }
       });
     });
@@ -177,7 +188,7 @@ const setupSocketHandlers = (io) => {
 };
 
 // Utility to remove user cleanly
-const handleUserLeave = (socket, projectId) => {
+const handleUserLeave = (io, socket, projectId) => {
   if (activeUsers.has(projectId)) {
     const user = activeUsers.get(projectId).get(socket.id);
     activeUsers.get(projectId).delete(socket.id);
@@ -188,6 +199,7 @@ const handleUserLeave = (socket, projectId) => {
 
     socket.to(projectId).emit("user-left", { socketId: socket.id, user });
     socket.leave(projectId);
+    broadcastActiveUsers(io, projectId);
     console.log(`User left project ${projectId}`);
   }
 };

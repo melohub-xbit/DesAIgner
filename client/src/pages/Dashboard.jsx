@@ -11,6 +11,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
+  const [joinCode, setJoinCode] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
@@ -50,6 +52,29 @@ const Dashboard = () => {
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const handleJoinProject = async (event) => {
+    event.preventDefault();
+    const sanitizedCode = joinCode.trim().toUpperCase();
+    if (!sanitizedCode) {
+      toast.error("Enter an invite code to join");
+      return;
+    }
+
+    setIsJoining(true);
+    try {
+      const { data } = await projectsAPI.joinWithCode(sanitizedCode);
+      toast.success("Joined project successfully");
+      setJoinCode("");
+      await loadProjects();
+      navigate(`/editor/${data.projectId}`);
+    } catch (error) {
+      const message = error.response?.data?.error || "Unable to join project";
+      toast.error(message);
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   const formatDate = (date) => {
@@ -96,6 +121,39 @@ const Dashboard = () => {
             New Project
           </button>
         </div>
+
+        <form
+          onSubmit={handleJoinProject}
+          className="mb-10 bg-gray-800 border border-gray-700 rounded-lg px-4 py-4 max-w-xl"
+        >
+          <label className="block text-xs uppercase tracking-wide text-gray-400 mb-2">
+            Join with invite code
+          </label>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={joinCode}
+              onChange={(event) =>
+                setJoinCode(event.target.value.toUpperCase())
+              }
+              placeholder="Enter 6-character code"
+              className="flex-1 px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm tracking-widest"
+              maxLength={8}
+              disabled={isJoining}
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-60"
+              disabled={isJoining}
+            >
+              <Users className="w-4 h-4" />
+              {isJoining ? "Joining..." : "Join"}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            Ask the project owner for an invite code from the settings page.
+          </p>
+        </form>
 
         {loading ? (
           <div className="text-center py-12">

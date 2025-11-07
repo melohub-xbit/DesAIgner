@@ -49,6 +49,12 @@ export const projectsAPI = {
   delete: (id) => api.delete(`/projects/${id}`),
   addCollaborator: (id, data) =>
     api.post(`/projects/${id}/collaborators`, data),
+  updateCollaboratorRole: (id, collaboratorId, data) =>
+    api.patch(`/projects/${id}/collaborators/${collaboratorId}`, data),
+  removeCollaborator: (id, collaboratorId) =>
+    api.delete(`/projects/${id}/collaborators/${collaboratorId}`),
+  generateInviteCode: (id) => api.post(`/projects/${id}/invite-code`),
+  joinWithCode: (code) => api.post(`/projects/join-with-code`, { code }),
 };
 
 export const assetsAPI = {

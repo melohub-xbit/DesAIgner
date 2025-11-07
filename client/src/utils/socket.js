@@ -1,17 +1,24 @@
 import { io } from "socket.io-client";
 
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL ||
+  import.meta.env.VITE_SERVER_URL ||
+  "http://localhost:5000";
+
 class SocketService {
   constructor() {
     this.socket = null;
   }
 
-  connect() {
+  connect(token) {
     if (!this.socket) {
-      this.socket = io("http://localhost:5000", {
+      this.socket = io(SOCKET_URL, {
         transports: ["websocket"],
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionAttempts: 5,
+        auth: token ? { token } : undefined,
+        withCredentials: true,
       });
 
       this.socket.on("connect", () => {
@@ -25,6 +32,8 @@ class SocketService {
       this.socket.on("connect_error", (error) => {
         console.error("Socket connection error:", error);
       });
+    } else if (token) {
+      this.socket.auth = { token };
     }
     return this.socket;
   }
@@ -36,9 +45,9 @@ class SocketService {
     }
   }
 
-  joinProject(projectId, user) {
+  joinProject(projectId, token) {
     if (this.socket) {
-      this.socket.emit("join-project", { projectId, user });
+      this.socket.emit("join-project", { projectId, token });
     }
   }
 
