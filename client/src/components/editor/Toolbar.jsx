@@ -28,7 +28,7 @@ import { useEditorStore } from "../../store/editorStore";
 import { projectsAPI } from "../../utils/api";
 import toast from "react-hot-toast";
 
-const Toolbar = ({ project, projectId, onProjectUpdate }) => {
+const Toolbar = ({ project, projectId, onProjectUpdate, onAIRequest }) => {
   const navigate = useNavigate();
   const [isRenaming, setIsRenaming] = useState(false);
   const [projectName, setProjectName] = useState(project?.name || "");
@@ -71,7 +71,11 @@ const Toolbar = ({ project, projectId, onProjectUpdate }) => {
   };
 
   const handleAI = () => {
-    toast.success("AI suggestions coming soon!");
+    if (typeof onAIRequest === "function") {
+      onAIRequest();
+    } else {
+      toast.success("AI suggestions coming soon!");
+    }
   };
 
   const handleStartRename = () => {

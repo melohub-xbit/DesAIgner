@@ -10,6 +10,7 @@ import Sidebar from "../components/editor/Sidebar";
 import PropertiesPanel from "../components/editor/PropertiesPanel";
 import PixiCanvas from "../components/editor/PixiCanvas";
 import CollaboratorCursors from "../components/editor/CollaboratorCursors";
+import AIAssistantPanel from "../components/editor/AIAssistantPanel";
 
 const GRID_MINOR = 25;
 
@@ -31,6 +32,7 @@ const Editor = () => {
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAssistantOpen, setAssistantOpen] = useState(false);
   const saveTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -246,6 +248,7 @@ const Editor = () => {
         project={project}
         projectId={projectId}
         onProjectUpdate={handleProjectUpdate}
+        onAIRequest={() => setAssistantOpen(true)}
       />
 
       <div className="flex-1 relative overflow-hidden">
@@ -264,6 +267,12 @@ const Editor = () => {
         <div className="absolute right-0 top-0 bottom-0 z-10">
           <PropertiesPanel projectId={projectId} />
         </div>
+
+        <AIAssistantPanel
+          isOpen={isAssistantOpen}
+          onClose={() => setAssistantOpen(false)}
+          projectId={projectId}
+        />
       </div>
     </div>
   );

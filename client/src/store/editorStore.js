@@ -35,6 +35,22 @@ export const useEditorStore = create((set, get) => ({
     get().saveHistory();
   },
 
+  addElementsBatch: (elementsToAdd) => {
+    const { elements } = get();
+    const additions = Array.isArray(elementsToAdd)
+      ? elementsToAdd.filter(Boolean)
+      : [];
+
+    if (additions.length === 0) {
+      return elements;
+    }
+
+    const nextElements = [...elements, ...additions];
+    set({ elements: nextElements });
+    get().saveHistory();
+    return nextElements;
+  },
+
   updateElement: (id, updates) => {
     const { elements } = get();
     set({
