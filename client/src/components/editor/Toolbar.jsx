@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   Save,
@@ -17,12 +18,22 @@ import {
   ZoomOut,
   Download,
   Sparkles,
+  Pen,
+  SquareStack,
+  Edit2,
+  Check,
+  X,
 } from "lucide-react";
 import { useEditorStore } from "../../store/editorStore";
+import { projectsAPI } from "../../utils/api";
 import toast from "react-hot-toast";
 
-const Toolbar = ({ project, projectId }) => {
+const Toolbar = ({ project, projectId, onProjectUpdate }) => {
   const navigate = useNavigate();
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [projectName, setProjectName] = useState(project?.name || "");
+  const [isSaving, setIsSaving] = useState(false);
+  
   const {
     activeTool,
     setActiveTool,
@@ -33,7 +44,15 @@ const Toolbar = ({ project, projectId }) => {
     history,
     historyIndex,
     activeUsers,
+    isFilled,
+    setIsFilled,
   } = useEditorStore();
+
+  useEffect(() => {
+    if (project?.name) {
+      setProjectName(project.name);
+    }
+  }, [project?.name]);
 
   const tools = [
     { id: "select", icon: MousePointer2, label: "Select (V)" },
@@ -43,6 +62,7 @@ const Toolbar = ({ project, projectId }) => {
     { id: "triangle", icon: Triangle, label: "Triangle (Y)" },
     { id: "line", icon: Slash, label: "Line (L)" },
     { id: "arrow", icon: ArrowUpRight, label: "Arrow (A)" },
+    { id: "freehand", icon: Pen, label: "Freehand (P)" },
     { id: "text", icon: Type, label: "Text (T)" },
   ];
 
@@ -52,6 +72,45 @@ const Toolbar = ({ project, projectId }) => {
 
   const handleAI = () => {
     toast.success("AI suggestions coming soon!");
+  };
+
+  const handleStartRename = () => {
+    setIsRenaming(true);
+    setProjectName(project?.name || "");
+  };
+
+  const handleCancelRename = () => {
+    setIsRenaming(false);
+    setProjectName(project?.name || "");
+  };
+
+  const handleSaveRename = async () => {
+    if (!projectName.trim()) {
+      toast.error("Project name cannot be empty");
+      return;
+    }
+
+    if (projectName.trim() === project?.name) {
+      setIsRenaming(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { data } = await projectsAPI.update(projectId, {
+        name: projectName.trim(),
+      });
+      toast.success("Project renamed successfully");
+      setIsRenaming(false);
+      if (onProjectUpdate) {
+        onProjectUpdate(data.project);
+      }
+    } catch (error) {
+      toast.error("Failed to rename project");
+      setProjectName(project?.name || "");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -68,7 +127,67 @@ const Toolbar = ({ project, projectId }) => {
 
         <div className="w-px h-8 bg-gray-700" />
 
-        <h2 className="text-white font-medium">{project?.name}</h2>
+        {isRenaming ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSaveRename();
+                } else if (e.key === "Escape") {
+                  handleCancelRename();
+                }
+              }}
+              className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm font-medium focus:outline-none focus:border-blue-500"
+              autoFocus
+              disabled={isSaving}
+            />
+            <button
+              onClick={handleSaveRename}
+              disabled={isSaving}
+              className="p-1 hover:bg-gray-700 rounded text-green-400 hover:text-green-300 transition-colors disabled:opacity-50"
+              title="Save"
+            >
+              <Check className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleCancelRename}
+              disabled={isSaving}
+              className="p-1 hover:bg-gray-700 rounded text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+              title="Cancel"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <h2 className="text-white font-medium">{project?.name}</h2>
+            <button
+              onClick={handleStartRename}
+              className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
+              title="Rename project"
+            >
+              <Edit2 className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        <div className="w-px h-8 bg-gray-700" />
+
+        {/* Fill Toggle */}
+        <button
+          onClick={() => setIsFilled(!isFilled)}
+          className={`p-2 rounded-lg transition-colors ${
+            isFilled
+              ? "bg-blue-600 text-white"
+              : "text-gray-300 hover:bg-gray-700"
+          }`}
+          title={isFilled ? "Filled Shapes" : "Unfilled Shapes"}
+        >
+          <SquareStack className="w-5 h-5" />
+        </button>
 
         <div className="w-px h-8 bg-gray-700" />
 

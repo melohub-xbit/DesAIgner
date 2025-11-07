@@ -220,9 +220,13 @@ const Editor = () => {
     );
   }
 
+  const handleProjectUpdate = (updatedProject) => {
+    setProject(updatedProject);
+  };
+
   return (
     <div className="h-screen bg-gray-900 flex flex-col overflow-hidden">
-      <Toolbar project={project} projectId={projectId} />
+      <Toolbar project={project} projectId={projectId} onProjectUpdate={handleProjectUpdate} />
 
       <div className="flex-1 relative overflow-hidden">
         {/* Canvas - Full width background */}
@@ -238,7 +242,7 @@ const Editor = () => {
 
         {/* Right Properties Panel - Overlays canvas */}
         <div className="absolute right-0 top-0 bottom-0 z-10">
-          <PropertiesPanel />
+          <PropertiesPanel projectId={projectId} />
         </div>
       </div>
     </div>

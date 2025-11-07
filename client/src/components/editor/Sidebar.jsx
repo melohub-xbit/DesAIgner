@@ -214,10 +214,10 @@ const Sidebar = ({ projectId }) => {
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-sm truncate">
-                            {element.type === "text"
+                            {element.name || (element.type === "text"
                               ? element.text || "Text"
                               : element.type.charAt(0).toUpperCase() +
-                                element.type.slice(1)}
+                                element.type.slice(1))}
                           </span>
                           <span className="text-xs opacity-75">{element.type}</span>
                         </div>
