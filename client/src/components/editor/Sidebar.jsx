@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Layers, Upload, Palette, Eye, EyeOff, Lock, Unlock, Image as ImageIcon } from "lucide-react";
+import { Assets } from "pixi.js";
+import { Layers, Upload, Eye, EyeOff, Lock, Unlock, Image as ImageIcon, Pencil, Check, X } from "lucide-react";
 import { useEditorStore } from "../../store/editorStore";
 import { useDropzone } from "react-dropzone";
 import { assetsAPI } from "../../utils/api";
@@ -13,7 +14,12 @@ const Sidebar = ({ projectId }) => {
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [width, setWidth] = useState(256); // 64 * 4 = 256px (w-64)
   const [isResizing, setIsResizing] = useState(false);
+  const [renamingAssetId, setRenamingAssetId] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renameLoading, setRenameLoading] = useState(false);
   const sidebarRef = useRef(null);
+  const renameInputRef = useRef(null);
+  const preloadedAssetsRef = useRef(new Set());
 
   useEffect(() => {
     if (activeTab === "assets") {
@@ -21,11 +27,31 @@ const Sidebar = ({ projectId }) => {
     }
   }, [activeTab, projectId]);
 
+  useEffect(() => {
+    if (renamingAssetId && renameInputRef.current) {
+      renameInputRef.current.focus();
+      renameInputRef.current.select();
+    }
+  }, [renamingAssetId]);
+
+  useEffect(() => {
+    if (activeTab !== "assets" || assets.length === 0) return;
+    assets.forEach((asset) => {
+      if (!asset.url || preloadedAssetsRef.current.has(asset.url)) return;
+      preloadedAssetsRef.current.add(asset.url);
+      Assets.backgroundLoad(asset.url).catch(() => {
+        preloadedAssetsRef.current.delete(asset.url);
+      });
+    });
+  }, [assets, activeTab]);
+
   const loadAssets = async () => {
     setLoadingAssets(true);
     try {
       const { data } = await assetsAPI.getAll(projectId);
       setAssets(data.assets || []);
+      setRenamingAssetId(null);
+      setRenameValue("");
     } catch (error) {
       toast.error("Failed to load assets");
     } finally {
@@ -95,6 +121,41 @@ const Sidebar = ({ projectId }) => {
     },
     multiple: true,
   });
+
+  const startRenaming = (asset) => {
+    setRenamingAssetId(asset._id);
+    setRenameValue(asset.name || "");
+  };
+
+  const cancelRenaming = () => {
+    setRenamingAssetId(null);
+    setRenameValue("");
+    setRenameLoading(false);
+  };
+
+  const submitRename = async (assetId) => {
+    if (!renameValue.trim()) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+
+    setRenameLoading(true);
+    try {
+      const { data } = await assetsAPI.update(assetId, {
+        name: renameValue.trim(),
+      });
+      setAssets((prev) =>
+        prev.map((asset) =>
+          asset._id === assetId ? { ...asset, name: data.asset.name } : asset
+        )
+      );
+      toast.success("Asset renamed");
+      cancelRenaming();
+    } catch (error) {
+      toast.error("Failed to rename asset");
+      setRenameLoading(false);
+    }
+  };
 
   const tabs = [
     { id: "layers", icon: Layers, label: "Layers" },
@@ -242,29 +303,32 @@ const Sidebar = ({ projectId }) => {
                   {assets.map((asset) => (
                     <div
                       key={asset._id}
-                      className="relative group cursor-pointer bg-gray-700 rounded-lg overflow-hidden hover:ring-2 hover:ring-blue-500 transition-all"
-                      onClick={() => {
-                        // Add image to canvas
-                        const newElement = {
-                          id: `image_${Date.now()}`,
-                          type: "image",
-                          x: 100,
-                          y: 100,
-                          width: asset.dimensions?.width || 200,
-                          height: asset.dimensions?.height || 200,
-                          src: asset.url,
-                          rotation: 0,
-                          opacity: 1,
-                          visible: true,
-                          locked: false,
-                          zIndex: elements.length,
-                        };
-                        addElement(newElement);
-                        toast.success("Image added to canvas");
-                      }}
-                      title={asset.name}
+                      className="bg-gray-700 rounded-lg overflow-hidden shadow-sm border border-gray-600/40"
                     >
-                      <div className="aspect-square bg-gray-800 flex items-center justify-center">
+                      <div
+                        className="aspect-square bg-gray-800 flex items-center justify-center relative cursor-pointer group"
+                        onClick={() => {
+                          const newElement = {
+                            id: `image_${Date.now()}`,
+                            type: "image",
+                            x: 100,
+                            y: 100,
+                            width: asset.dimensions?.width || 200,
+                            height: asset.dimensions?.height || 200,
+                            src: asset.url,
+                            rotation: 0,
+                            opacity: 1,
+                            visible: true,
+                            locked: false,
+                            zIndex: elements.length,
+                            blendMode: "normal",
+                            effects: {},
+                          };
+                          addElement(newElement);
+                          toast.success("Image added to canvas");
+                        }}
+                        title={asset.name}
+                      >
                         {asset.thumbnail ? (
                           <img
                             src={asset.thumbnail}
@@ -274,11 +338,81 @@ const Sidebar = ({ projectId }) => {
                         ) : (
                           <ImageIcon className="w-8 h-8 text-gray-500" />
                         )}
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center pointer-events-none">
+                          <p className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity px-2 text-center">
+                            Click to add
+                          </p>
+                        </div>
                       </div>
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-opacity flex items-center justify-center">
-                        <p className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity px-2 text-center">
-                          Click to add
-                        </p>
+
+                      <div className="border-t border-gray-600 bg-gray-800 px-2 py-1 flex items-center gap-2">
+                        {renamingAssetId === asset._id ? (
+                          <form
+                            className="flex items-center gap-2 w-full"
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              submitRename(asset._id);
+                            }}
+                          >
+                            <input
+                              ref={renameInputRef}
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              onKeyDown={(e) => {
+                                if (e.key === "Escape") {
+                                  e.preventDefault();
+                                  cancelRenaming();
+                                }
+                              }}
+                              className="flex-1 bg-gray-700 text-white text-xs px-2 py-1 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+                              disabled={renameLoading}
+                              placeholder="Asset name"
+                            />
+                            <button
+                              type="submit"
+                              className="p-1 rounded bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50"
+                              disabled={renameLoading}
+                              title="Save name"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              className="p-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                cancelRenaming();
+                              }}
+                              disabled={renameLoading}
+                              title="Cancel"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </form>
+                        ) : (
+                          <>
+                            <div className="flex-1 min-w-0">
+                              <span className="block text-xs text-gray-300 truncate" title={asset.name}>
+                                {asset.name}
+                              </span>
+                              <span className="text-[10px] text-gray-500">
+                                {(asset.dimensions?.width || 0)} × {(asset.dimensions?.height || 0)} px
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className="p-1 rounded hover:bg-gray-700 text-gray-300"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startRenaming(asset);
+                              }}
+                              title="Rename asset"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}

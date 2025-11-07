@@ -4,10 +4,13 @@ import {
   Save,
   Users,
   MousePointer2,
+  Hand,
   Square,
   Circle,
+  Triangle,
+  Slash,
+  ArrowUpRight,
   Type,
-  Image,
   Undo2,
   Redo2,
   ZoomIn,
@@ -34,8 +37,12 @@ const Toolbar = ({ project, projectId }) => {
 
   const tools = [
     { id: "select", icon: MousePointer2, label: "Select (V)" },
+    { id: "pan", icon: Hand, label: "Pan (H)" },
     { id: "rectangle", icon: Square, label: "Rectangle (R)" },
     { id: "circle", icon: Circle, label: "Circle (C)" },
+    { id: "triangle", icon: Triangle, label: "Triangle (Y)" },
+    { id: "line", icon: Slash, label: "Line (L)" },
+    { id: "arrow", icon: ArrowUpRight, label: "Arrow (A)" },
     { id: "text", icon: Type, label: "Text (T)" },
   ];
 

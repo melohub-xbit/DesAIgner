@@ -13,7 +13,21 @@ const PropertiesPanel = () => {
       ? elements.find((el) => el.id === selectedIds[0])
       : null;
 
-  const [showColorPicker, setShowColorPicker] = useState(false);
+  const effects = selectedElement?.effects || {};
+  const blendModeOptions = [
+    { value: "normal", label: "Normal" },
+    { value: "add", label: "Add" },
+    { value: "multiply", label: "Multiply" },
+    { value: "screen", label: "Screen" },
+    { value: "overlay", label: "Overlay" },
+    { value: "difference", label: "Difference" },
+    { value: "hard_light", label: "Hard Light" },
+    { value: "lighten", label: "Lighten" },
+    { value: "darken", label: "Darken" },
+  ];
+
+  const [showFillPicker, setShowFillPicker] = useState(false);
+  const [showStrokePicker, setShowStrokePicker] = useState(false);
   const [width, setWidth] = useState(256); // 64 * 4 = 256px (w-64)
   const [isResizing, setIsResizing] = useState(false);
   const panelRef = useRef(null);
@@ -52,6 +66,11 @@ const PropertiesPanel = () => {
     };
   }, [isResizing]);
 
+  useEffect(() => {
+    setShowFillPicker(false);
+    setShowStrokePicker(false);
+  }, [selectedElement?.id]);
+
   if (!selectedElement) {
     return (
       <div 
@@ -84,6 +103,27 @@ const PropertiesPanel = () => {
     socketService.emitElementUpdate(selectedElement.id, {
       ...selectedElement,
       ...updates,
+    });
+  };
+
+  const updateEffects = (key, partial) => {
+    handleUpdate({
+      effects: {
+        ...effects,
+        [key]: {
+          ...(effects[key] || {}),
+          ...partial,
+        },
+      },
+    });
+  };
+
+  const toggleCacheAsBitmap = (value) => {
+    handleUpdate({
+      effects: {
+        ...effects,
+        cacheAsBitmap: value,
+      },
     });
   };
 
@@ -221,31 +261,160 @@ const PropertiesPanel = () => {
           </p>
         </div>
 
+        {/* Blend Mode */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Blend Mode
+          </label>
+          <select
+            value={selectedElement.blendMode || "normal"}
+            onChange={(e) => handleUpdate({ blendMode: e.target.value })}
+            className="w-full bg-gray-700 border border-gray-600 rounded text-white text-sm px-2 py-1"
+          >
+            {blendModeOptions.map((mode) => (
+              <option key={mode.value} value={mode.value}>
+                {mode.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Effects */}
+        <div className="space-y-3 border border-gray-700 rounded-lg p-3 bg-gray-800/60">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm font-medium text-gray-300">Blur</span>
+              <p className="text-xs text-gray-500">
+                Softens edges with a Gaussian blur.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              className="h-4 w-4 text-blue-500"
+              checked={!!effects.blur?.enabled}
+              onChange={(e) => updateEffects("blur", { enabled: e.target.checked })}
+            />
+          </div>
+          {effects.blur?.enabled && (
+            <div className="space-y-1">
+              <input
+                type="range"
+                min="0"
+                max="20"
+                step="1"
+                value={effects.blur?.strength ?? 4}
+                onChange={(e) => updateEffects("blur", { strength: Number(e.target.value) })}
+                className="w-full"
+              />
+              <p className="text-xs text-gray-400">{effects.blur?.strength ?? 4}px</p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm font-medium text-gray-300">Grayscale</span>
+              <p className="text-xs text-gray-500">Convert colors to monochrome.</p>
+            </div>
+            <input
+              type="checkbox"
+              className="h-4 w-4 text-blue-500"
+              checked={!!effects.grayscale?.enabled}
+              onChange={(e) => updateEffects("grayscale", { enabled: e.target.checked })}
+            />
+          </div>
+          {effects.grayscale?.enabled && (
+            <div className="space-y-1">
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={effects.grayscale?.amount ?? 1}
+                onChange={(e) => updateEffects("grayscale", { amount: Number(e.target.value) })}
+                className="w-full"
+              />
+              <p className="text-xs text-gray-400">
+                {Math.round((effects.grayscale?.amount ?? 1) * 100)}% intensity
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm font-medium text-gray-300">Cache as Texture</span>
+              <p className="text-xs text-gray-500">
+                Boost rendering speed for static elements.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              className="h-4 w-4 text-blue-500"
+              checked={!!effects.cacheAsBitmap}
+              onChange={(e) => toggleCacheAsBitmap(e.target.checked)}
+            />
+          </div>
+        </div>
+
         {/* Fill Color */}
-        {selectedElement.fill && (
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+        {typeof selectedElement.fill === "string" && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-300">
               Fill Color
             </label>
-            <div className="relative">
-              <button
-                onClick={() => setShowColorPicker(!showColorPicker)}
-                className="w-full h-10 rounded border-2 border-gray-600"
-                style={{ backgroundColor: selectedElement.fill }}
-              />
-              {showColorPicker && (
-                <div className="relative mt-2 z-10">
-                  <div
-                    className="absolute inset-0 -z-10"
-                    onClick={() => setShowColorPicker(false)}
-                  />
-                  <HexColorPicker
-                    color={selectedElement.fill}
-                    onChange={(color) => handleUpdate({ fill: color })}
-                  />
-                </div>
-              )}
-            </div>
+            <button
+              onClick={() => setShowFillPicker(!showFillPicker)}
+              className="w-full h-10 rounded border-2 border-gray-600"
+              style={{ backgroundColor: selectedElement.fill }}
+            />
+            {showFillPicker && (
+              <div className="mt-2 p-3 border border-gray-700 rounded-lg bg-gray-800/80">
+                <HexColorPicker
+                  color={selectedElement.fill}
+                  onChange={(color) => handleUpdate({ fill: color })}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Stroke Color */}
+        {typeof selectedElement.stroke === "string" && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-300">
+              Stroke Color
+            </label>
+            <button
+              onClick={() => setShowStrokePicker(!showStrokePicker)}
+              className="w-full h-10 rounded border-2 border-gray-600"
+              style={{ backgroundColor: selectedElement.stroke }}
+            />
+            {showStrokePicker && (
+              <div className="mt-2 p-3 border border-gray-700 rounded-lg bg-gray-800/80">
+                <HexColorPicker
+                  color={selectedElement.stroke}
+                  onChange={(color) => handleUpdate({ stroke: color })}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Stroke Width */}
+        {typeof selectedElement.strokeWidth === "number" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Stroke Width
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={selectedElement.strokeWidth}
+              onChange={(e) =>
+                handleUpdate({ strokeWidth: Math.max(0, Number(e.target.value)) })
+              }
+              className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+            />
           </div>
         )}
 
