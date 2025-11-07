@@ -63,6 +63,13 @@ router.post("/", auth, async (req, res) => {
     });
 
     await project.save();
+    
+    // Add project to user's projects array
+    const User = require("../models/User");
+    await User.findByIdAndUpdate(req.user._id, {
+      $addToSet: { projects: project._id },
+    });
+    
     await project.populate("owner", "username email avatar");
 
     res.status(201).json({ project, message: "Project created successfully" });
@@ -169,6 +176,12 @@ router.post("/:id/collaborators", auth, async (req, res) => {
       role: role || "editor",
     });
     await project.save();
+    
+    // Add project to collaborator's projects array
+    await User.findByIdAndUpdate(collaborator._id, {
+      $addToSet: { projects: project._id },
+    });
+    
     await project.populate("collaborators.user", "username email avatar");
 
     res.json({ project, message: "Collaborator added successfully" });

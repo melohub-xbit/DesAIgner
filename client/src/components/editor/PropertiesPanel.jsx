@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { HexColorPicker } from "react-colorful";
 import { Trash2, Lock, Unlock, Eye, EyeOff } from "lucide-react";
 import { useEditorStore } from "../../store/editorStore";
@@ -14,13 +14,67 @@ const PropertiesPanel = () => {
       : null;
 
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [width, setWidth] = useState(256); // 64 * 4 = 256px (w-64)
+  const [isResizing, setIsResizing] = useState(false);
+  const panelRef = useRef(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const newWidth = window.innerWidth - e.clientX;
+      if (newWidth >= 200 && newWidth <= 500) {
+        setWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    if (isResizing) {
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing]);
 
   if (!selectedElement) {
     return (
-      <div className="w-64 bg-gray-800 border-l border-gray-700 p-4">
+      <div 
+        ref={panelRef}
+        className="bg-gray-800 border-l border-gray-700 p-4 relative shrink-0 overflow-y-auto h-full shadow-lg"
+        style={{ width: `${width}px` }}
+      >
         <p className="text-gray-500 text-sm">
           Select an element to edit properties
         </p>
+        
+        {/* Resize handle */}
+        <div
+          className="absolute top-0 left-0 w-2 h-full cursor-col-resize hover:bg-blue-500 transition-colors z-20"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsResizing(true);
+          }}
+          style={{ 
+            background: isResizing ? '#3b82f6' : 'transparent',
+          }}
+        />
       </div>
     );
   }
@@ -41,15 +95,32 @@ const PropertiesPanel = () => {
   };
 
   return (
-    <div className="w-64 bg-gray-800 border-l border-gray-700 overflow-y-auto">
-      <div className="p-4 border-b border-gray-700">
+    <div 
+      ref={panelRef}
+      className="bg-gray-800 border-l border-gray-700 overflow-y-auto relative shrink-0 flex flex-col h-full shadow-lg"
+      style={{ width: `${width}px` }}
+    >
+      {/* Resize handle */}
+      <div
+        className="absolute top-0 left-0 w-2 h-full cursor-col-resize hover:bg-blue-500 transition-colors z-20"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsResizing(true);
+        }}
+        style={{ 
+          background: isResizing ? '#3b82f6' : 'transparent',
+        }}
+      />
+      
+      <div className="p-4 border-b border-gray-700 shrink-0">
         <h3 className="text-white font-medium mb-2">Properties</h3>
         <p className="text-gray-400 text-sm capitalize">
           {selectedElement.type}
         </p>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 overflow-y-auto flex-1">
         {/* Position & Size */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -152,7 +223,7 @@ const PropertiesPanel = () => {
 
         {/* Fill Color */}
         {selectedElement.fill && (
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Fill Color
             </label>
@@ -163,9 +234,9 @@ const PropertiesPanel = () => {
                 style={{ backgroundColor: selectedElement.fill }}
               />
               {showColorPicker && (
-                <div className="absolute z-10 mt-2">
+                <div className="relative mt-2 z-10">
                   <div
-                    className="fixed inset-0"
+                    className="absolute inset-0 -z-10"
                     onClick={() => setShowColorPicker(false)}
                   />
                   <HexColorPicker

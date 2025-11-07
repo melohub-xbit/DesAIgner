@@ -9,6 +9,7 @@ const PixiCanvas = ({ projectId }) => {
   const elementsMapRef = useRef(new Map());
   const isDraggingRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
+  const activeToolRef = useRef("select");
 
   const {
     elements,
@@ -24,6 +25,11 @@ const PixiCanvas = ({ projectId }) => {
     setZoom,
     setPan,
   } = useEditorStore();
+
+  // Keep activeToolRef in sync with activeTool
+  useEffect(() => {
+    activeToolRef.current = activeTool;
+  }, [activeTool]);
 
   useEffect(() => {
     initPixiApp();
@@ -50,8 +56,8 @@ const PixiCanvas = ({ projectId }) => {
   const initPixiApp = async () => {
     // PixiJS v7 - direct initialization (no init() method)
     const app = new Application({
-      width: window.innerWidth - 320, // Minus sidebars
-      height: window.innerHeight - 60, // Minus toolbar
+      width: canvasRef.current.clientWidth,
+      height: canvasRef.current.clientHeight,
       backgroundColor: canvasSettings.backgroundColor || 0xffffff,
       antialias: true,
       autoDensity: true,
@@ -64,12 +70,20 @@ const PixiCanvas = ({ projectId }) => {
     setupCanvasInteraction();
 
     // Handle resize
-    const handleResize = () => {
-      app.renderer.resize(window.innerWidth - 320, window.innerHeight - 60);
-    };
-    window.addEventListener("resize", handleResize);
+    const resizeObserver = new ResizeObserver(() => {
+      if (canvasRef.current && app.renderer) {
+        app.renderer.resize(
+          canvasRef.current.clientWidth, 
+          canvasRef.current.clientHeight
+        );
+      }
+    });
+    
+    resizeObserver.observe(canvasRef.current);
 
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      resizeObserver.disconnect();
+    };
   };
 
   const setupCanvasInteraction = () => {
@@ -92,8 +106,9 @@ const PixiCanvas = ({ projectId }) => {
 
   const handlePointerDown = (event) => {
     const pos = event.data.global;
+    const currentTool = activeToolRef.current;
 
-    if (activeTool === "select") {
+    if (currentTool === "select") {
       const clickedElement = findElementAtPosition(pos.x, pos.y);
 
       if (clickedElement) {
@@ -103,11 +118,11 @@ const PixiCanvas = ({ projectId }) => {
       } else {
         clearSelection();
       }
-    } else if (activeTool === "rectangle") {
+    } else if (currentTool === "rectangle") {
       createRectangle(pos.x, pos.y);
-    } else if (activeTool === "circle") {
+    } else if (currentTool === "circle") {
       createCircle(pos.x, pos.y);
-    } else if (activeTool === "text") {
+    } else if (currentTool === "text") {
       createText(pos.x, pos.y);
     }
   };
@@ -183,8 +198,8 @@ const PixiCanvas = ({ projectId }) => {
     const element = {
       id: `rect_${Date.now()}`,
       type: "rectangle",
-      x: x / zoom - pan.x / zoom,
-      y: y / zoom - pan.y / zoom,
+      x: (x - pan.x) / zoom,
+      y: (y - pan.y) / zoom,
       width: 100,
       height: 100,
       fill: "#3b82f6",
@@ -192,6 +207,8 @@ const PixiCanvas = ({ projectId }) => {
       strokeWidth: 2,
       rotation: 0,
       opacity: 1,
+      visible: true,
+      locked: false,
       zIndex: elements.length,
     };
 
@@ -203,8 +220,8 @@ const PixiCanvas = ({ projectId }) => {
     const element = {
       id: `circle_${Date.now()}`,
       type: "circle",
-      x: x / zoom - pan.x / zoom,
-      y: y / zoom - pan.y / zoom,
+      x: (x - pan.x) / zoom,
+      y: (y - pan.y) / zoom,
       width: 100,
       height: 100,
       fill: "#ef4444",
@@ -212,6 +229,8 @@ const PixiCanvas = ({ projectId }) => {
       strokeWidth: 2,
       rotation: 0,
       opacity: 1,
+      visible: true,
+      locked: false,
       zIndex: elements.length,
     };
 
@@ -223,8 +242,8 @@ const PixiCanvas = ({ projectId }) => {
     const element = {
       id: `text_${Date.now()}`,
       type: "text",
-      x: x / zoom - pan.x / zoom,
-      y: y / zoom - pan.y / zoom,
+      x: (x - pan.x) / zoom,
+      y: (y - pan.y) / zoom,
       width: 200,
       height: 50,
       text: "Double click to edit",
@@ -233,6 +252,8 @@ const PixiCanvas = ({ projectId }) => {
       fill: "#000000",
       rotation: 0,
       opacity: 1,
+      visible: true,
+      locked: false,
       zIndex: elements.length,
     };
 
@@ -255,31 +276,47 @@ const PixiCanvas = ({ projectId }) => {
 
       if (element.type === "rectangle") {
         pixiObject = new Graphics();
-        pixiObject.rect(0, 0, element.width, element.height);
-        pixiObject.fill(element.fill || 0x000000);
+        // New PixiJS v7+ API - draw then fill/stroke
+        const fillColor = element.fill ? parseInt(element.fill.replace('#', '0x')) : 0x000000;
+        pixiObject.beginFill(fillColor);
         if (element.strokeWidth > 0) {
-          pixiObject.stroke({
-            width: element.strokeWidth,
-            color: element.stroke || 0x000000,
-          });
+          const strokeColor = element.stroke ? parseInt(element.stroke.replace('#', '0x')) : 0x000000;
+          pixiObject.lineStyle(element.strokeWidth, strokeColor);
         }
+        pixiObject.drawRect(0, 0, element.width, element.height);
+        pixiObject.endFill();
       } else if (element.type === "circle") {
         pixiObject = new Graphics();
         const radius = element.width / 2;
-        pixiObject.circle(radius, radius, radius);
-        pixiObject.fill(element.fill || 0x000000);
+        const fillColor = element.fill ? parseInt(element.fill.replace('#', '0x')) : 0x000000;
+        pixiObject.beginFill(fillColor);
         if (element.strokeWidth > 0) {
-          pixiObject.stroke({
-            width: element.strokeWidth,
-            color: element.stroke || 0x000000,
-          });
+          const strokeColor = element.stroke ? parseInt(element.stroke.replace('#', '0x')) : 0x000000;
+          pixiObject.lineStyle(element.strokeWidth, strokeColor);
         }
+        pixiObject.drawCircle(radius, radius, radius);
+        pixiObject.endFill();
       } else if (element.type === "text") {
         pixiObject = new Text(element.text || "Text", {
           fontSize: element.fontSize || 24,
           fontFamily: element.fontFamily || "Arial",
           fill: element.fill || "#000000",
         });
+      } else if (element.type === "image") {
+        // Handle image elements
+        try {
+          const texture = Texture.from(element.src);
+          pixiObject = new Sprite(texture);
+          pixiObject.width = element.width;
+          pixiObject.height = element.height;
+        } catch (error) {
+          console.error("Failed to load image:", error);
+          // Fallback to placeholder
+          pixiObject = new Graphics();
+          pixiObject.beginFill(0xcccccc);
+          pixiObject.drawRect(0, 0, element.width, element.height);
+          pixiObject.endFill();
+        }
       }
 
       if (pixiObject) {
@@ -292,8 +329,8 @@ const PixiCanvas = ({ projectId }) => {
         // Selection highlight
         if (selectedIds.includes(element.id)) {
           const bounds = new Graphics();
-          bounds.rect(-2, -2, element.width + 4, element.height + 4);
-          bounds.stroke({ width: 2, color: 0x3b82f6 });
+          bounds.lineStyle(2, 0x3b82f6);
+          bounds.drawRect(-2, -2, element.width + 4, element.height + 4);
           pixiObject.addChild(bounds);
         }
 
@@ -306,7 +343,7 @@ const PixiCanvas = ({ projectId }) => {
   return (
     <div
       ref={canvasRef}
-      className="w-full h-full bg-gray-100"
+      className="w-full h-full bg-gray-100 relative"
       style={{ cursor: activeTool === "select" ? "default" : "crosshair" }}
     />
   );

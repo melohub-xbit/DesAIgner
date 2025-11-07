@@ -32,7 +32,52 @@ const Editor = () => {
     loadProject();
     setupSocketListeners();
 
+    // Keyboard shortcuts
+    const handleKeyDown = (e) => {
+      const { setActiveTool, undo, redo, deleteSelected } = useEditorStore.getState();
+      
+      // Tool shortcuts
+      if (e.key === 'v' || e.key === 'V') {
+        setActiveTool('select');
+      } else if (e.key === 'r' || e.key === 'R') {
+        setActiveTool('rectangle');
+      } else if (e.key === 'c' || e.key === 'C') {
+        setActiveTool('circle');
+      } else if (e.key === 't' || e.key === 'T') {
+        setActiveTool('text');
+      }
+      
+      // Undo/Redo
+      if (e.ctrlKey || e.metaKey) {
+        if (e.shiftKey && e.key === 'z') {
+          e.preventDefault();
+          redo();
+        } else if (e.key === 'z') {
+          e.preventDefault();
+          undo();
+        }
+      }
+      
+      // Delete
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const { selectedIds } = useEditorStore.getState();
+        if (selectedIds.length > 0) {
+          e.preventDefault();
+          deleteSelected();
+        }
+      }
+      
+      // Escape to deselect
+      if (e.key === 'Escape') {
+        useEditorStore.getState().clearSelection();
+        setActiveTool('select');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
+      window.removeEventListener('keydown', handleKeyDown);
       socketService.leaveProject(projectId);
       socketService.disconnect();
     };
@@ -137,15 +182,22 @@ const Editor = () => {
     <div className="h-screen bg-gray-900 flex flex-col overflow-hidden">
       <Toolbar project={project} projectId={projectId} />
 
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar projectId={projectId} />
-
-        <div className="flex-1 relative">
+      <div className="flex-1 relative overflow-hidden">
+        {/* Canvas - Full width background */}
+        <div className="absolute inset-0">
           <PixiCanvas projectId={projectId} />
           <CollaboratorCursors />
         </div>
 
-        <PropertiesPanel />
+        {/* Left Sidebar - Overlays canvas */}
+        <div className="absolute left-0 top-0 bottom-0 z-10">
+          <Sidebar projectId={projectId} />
+        </div>
+
+        {/* Right Properties Panel - Overlays canvas */}
+        <div className="absolute right-0 top-0 bottom-0 z-10">
+          <PropertiesPanel />
+        </div>
       </div>
     </div>
   );
