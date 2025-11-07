@@ -125,7 +125,11 @@ const PixiCanvas = ({ projectId }) => {
         panModifierRef.current = false;
         if (!panStateRef.current.active && canvasRef.current) {
           const shouldGrab = activeToolRef.current === "pan";
-          canvasRef.current.style.cursor = shouldGrab ? "grab" : activeToolRef.current === "select" ? "default" : "crosshair";
+          canvasRef.current.style.cursor = shouldGrab
+            ? "grab"
+            : activeToolRef.current === "select"
+            ? "default"
+            : "crosshair";
         }
         event.preventDefault();
       }
@@ -158,7 +162,10 @@ const PixiCanvas = ({ projectId }) => {
       graphics.beginFill(parseColor(element.fill, 0xffffff));
     }
     if (element.strokeWidth > 0) {
-      graphics.lineStyle(element.strokeWidth, parseColor(element.stroke, 0x000000));
+      graphics.lineStyle(
+        element.strokeWidth,
+        parseColor(element.stroke, 0x000000)
+      );
     } else {
       graphics.lineStyle(0);
     }
@@ -177,21 +184,25 @@ const PixiCanvas = ({ projectId }) => {
         const strokeColor = parseColor(element.stroke || "#000000", 0x000000);
         graphics.lineStyle(0);
         graphics.beginFill(strokeColor);
-        graphics.drawCircle(element.points[0].x, element.points[0].y, strokeWidth / 2);
+        graphics.drawCircle(
+          element.points[0].x,
+          element.points[0].y,
+          strokeWidth / 2
+        );
         graphics.endFill();
       }
       return;
     }
-    
+
     const strokeWidth = element.strokeWidth || 3;
     const strokeColor = parseColor(element.stroke || "#000000", 0x000000);
     graphics.lineStyle(strokeWidth, strokeColor);
-    
+
     graphics.moveTo(element.points[0].x, element.points[0].y);
     for (let i = 1; i < element.points.length; i++) {
       graphics.lineTo(element.points[i].x, element.points[i].y);
     }
-    
+
     if (element.fill) {
       graphics.beginFill(parseColor(element.fill, 0xffffff));
       graphics.closePath();
@@ -205,7 +216,10 @@ const PixiCanvas = ({ projectId }) => {
       graphics.beginFill(parseColor(element.fill, 0xffffff));
     }
     if (element.strokeWidth > 0) {
-      graphics.lineStyle(element.strokeWidth, parseColor(element.stroke, 0x000000));
+      graphics.lineStyle(
+        element.strokeWidth,
+        parseColor(element.stroke, 0x000000)
+      );
     } else {
       graphics.lineStyle(0);
     }
@@ -226,7 +240,10 @@ const PixiCanvas = ({ projectId }) => {
       graphics.beginFill(parseColor(element.fill, 0xffffff));
     }
     if (element.strokeWidth > 0) {
-      graphics.lineStyle(element.strokeWidth, parseColor(element.stroke, 0x000000));
+      graphics.lineStyle(
+        element.strokeWidth,
+        parseColor(element.stroke, 0x000000)
+      );
     } else {
       graphics.lineStyle(0);
     }
@@ -248,7 +265,10 @@ const PixiCanvas = ({ projectId }) => {
       graphics.beginFill(parseColor(element.fill, 0xffffff));
     }
     if (element.strokeWidth > 0) {
-      graphics.lineStyle(element.strokeWidth, parseColor(element.stroke, 0x000000));
+      graphics.lineStyle(
+        element.strokeWidth,
+        parseColor(element.stroke, 0x000000)
+      );
     } else {
       graphics.lineStyle(0);
     }
@@ -268,7 +288,10 @@ const PixiCanvas = ({ projectId }) => {
   const drawLineShape = (graphics, element) => {
     graphics.clear();
     const strokeWidth = element.strokeWidth ?? 4;
-    graphics.lineStyle(strokeWidth, parseColor(element.stroke || element.fill || "#1f2937", 0x1f2937));
+    graphics.lineStyle(
+      strokeWidth,
+      parseColor(element.stroke || element.fill || "#1f2937", 0x1f2937)
+    );
     graphics.moveTo(0, 0);
     graphics.lineTo(element.width, element.height);
   };
@@ -333,7 +356,7 @@ const PixiCanvas = ({ projectId }) => {
         drawGrid();
       }
     });
-    
+
     resizeObserver.observe(canvasRef.current);
 
     return () => {
@@ -363,7 +386,7 @@ const PixiCanvas = ({ projectId }) => {
 
     const overlayLayer = new Container();
     overlayLayer.zIndex = 2;
-    overlayLayer.eventMode = "static";
+    overlayLayer.eventMode = "passive";
     overlayLayer.interactiveChildren = true;
     stage.addChild(overlayLayer);
     overlayLayerRef.current = overlayLayer;
@@ -418,16 +441,17 @@ const PixiCanvas = ({ projectId }) => {
       if (clickedElement) {
         selectElement(clickedElement.id, event.data.originalEvent.shiftKey);
         isDraggingRef.current = true;
-        dragStartRef.current = { 
-          x: worldPos.x, 
+        dragStartRef.current = {
+          x: worldPos.x,
           y: worldPos.y,
         };
         // Store initial positions for all selected elements
         dragElementsRef.current.clear();
-        // Get current selected IDs after selection (which may have changed)
-        const currentSelectedIds = useEditorStore.getState().selectedIds;
+        const currentState = useEditorStore.getState();
+        const currentSelectedIds = currentState.selectedIds;
+        const currentElements = currentState.elements;
         currentSelectedIds.forEach((id) => {
-          const el = elements.find((e) => e.id === id);
+          const el = currentElements.find((e) => e.id === id);
           if (el) {
             dragElementsRef.current.set(id, { x: el.x, y: el.y });
           }
@@ -442,7 +466,9 @@ const PixiCanvas = ({ projectId }) => {
         points: [{ x: worldPos.x, y: worldPos.y }],
         elementId: null,
       };
-    } else if (["rectangle", "circle", "triangle", "line", "arrow"].includes(currentTool)) {
+    } else if (
+      ["rectangle", "circle", "triangle", "line", "arrow"].includes(currentTool)
+    ) {
       // Start interactive drawing
       const startX = snapValue(worldPos.x);
       const startY = snapValue(worldPos.y);
@@ -462,7 +488,7 @@ const PixiCanvas = ({ projectId }) => {
       handleRotateDrag(event);
       return;
     }
-    
+
     if (resizeStateRef.current) {
       handleResizeDrag(event);
       return;
@@ -470,6 +496,10 @@ const PixiCanvas = ({ projectId }) => {
 
     const pos = event.data.global;
     const worldPos = toWorldCoordinates(pos);
+    const currentState = useEditorStore.getState();
+    const currentSelectedIds = currentState.selectedIds;
+    const currentElements = currentState.elements;
+    const currentZoom = currentState.zoom;
 
     // Emit cursor position for collaboration
     socketService.emitCursorMove(projectId, { x: worldPos.x, y: worldPos.y });
@@ -486,7 +516,7 @@ const PixiCanvas = ({ projectId }) => {
       const { tool, startX, startY, elementId } = drawingStateRef.current;
       const currentX = snapValue(worldPos.x);
       const currentY = snapValue(worldPos.y);
-      
+
       const width = Math.abs(currentX - startX);
       const height = Math.abs(currentY - startY);
       const x = Math.min(startX, currentX);
@@ -494,29 +524,40 @@ const PixiCanvas = ({ projectId }) => {
 
       if (elementId) {
         // Update existing element
-        const updates = { x, y, width: Math.max(width, MIN_ELEMENT_SIZE), height: Math.max(height, MIN_ELEMENT_SIZE) };
+        const updates = {
+          x,
+          y,
+          width: Math.max(width, MIN_ELEMENT_SIZE),
+          height: Math.max(height, MIN_ELEMENT_SIZE),
+        };
         updateElement(elementId, updates);
       } else {
         // Create new element
-        const element = createDrawingElement(tool, x, y, Math.max(width, MIN_ELEMENT_SIZE), Math.max(height, MIN_ELEMENT_SIZE));
+        const element = createDrawingElement(
+          tool,
+          x,
+          y,
+          Math.max(width, MIN_ELEMENT_SIZE),
+          Math.max(height, MIN_ELEMENT_SIZE)
+        );
         drawingStateRef.current.elementId = element.id;
       }
       return;
     }
 
     // Handle dragging selected elements
-    if (isDraggingRef.current && selectedIds.length > 0) {
+    if (isDraggingRef.current && currentSelectedIds.length > 0) {
       const dx = worldPos.x - dragStartRef.current.x;
       const dy = worldPos.y - dragStartRef.current.y;
 
-      selectedIds.forEach((id) => {
-        const element = elements.find((el) => el.id === id);
+      currentSelectedIds.forEach((id) => {
+        const element = currentElements.find((el) => el.id === id);
         if (element && !element.locked) {
           const initialPos = dragElementsRef.current.get(id);
           if (initialPos) {
             const newX = snapValue(initialPos.x + dx);
             const newY = snapValue(initialPos.y + dy);
-            
+
             const updated = {
               ...element,
               x: newX,
@@ -529,8 +570,8 @@ const PixiCanvas = ({ projectId }) => {
       });
     } else if (panStateRef.current.active) {
       const { startGlobal, startCamera } = panStateRef.current;
-      const dx = (startGlobal.x - pos.x) / zoom;
-      const dy = (startGlobal.y - pos.y) / zoom;
+      const dx = (startGlobal.x - pos.x) / currentZoom;
+      const dy = (startGlobal.y - pos.y) / currentZoom;
       setPan({ x: startCamera.x + dx, y: startCamera.y + dy });
     }
   };
@@ -539,11 +580,11 @@ const PixiCanvas = ({ projectId }) => {
     if (rotateStateRef.current) {
       finalizeRotate();
     }
-    
+
     if (resizeStateRef.current) {
       finalizeResize();
     }
-    
+
     // Finalize freehand drawing
     if (freeDrawPathRef.current) {
       finalizeFreeDrawShape();
@@ -553,31 +594,38 @@ const PixiCanvas = ({ projectId }) => {
         setActiveTool("select");
       }
     }
-    
+
     // Finalize interactive drawing
     if (drawingStateRef.current) {
       if (drawingStateRef.current.elementId) {
-        const element = elements.find((el) => el.id === drawingStateRef.current.elementId);
+        const element = useEditorStore
+          .getState()
+          .elements.find((el) => el.id === drawingStateRef.current.elementId);
         if (element) {
           socketService.emitElementAdd(projectId, element);
         }
       }
       drawingStateRef.current = null;
       // Auto-switch to select tool after drawing
-      if (activeToolRef.current !== "select" && activeToolRef.current !== "pan") {
+      if (
+        activeToolRef.current !== "select" &&
+        activeToolRef.current !== "pan"
+      ) {
         setActiveTool("select");
       }
     }
-    
+
     isDraggingRef.current = false;
+    dragElementsRef.current.clear();
     panStateRef.current.active = false;
     if (canvasRef.current) {
-      const shouldGrab = panModifierRef.current || activeToolRef.current === "pan";
+      const shouldGrab =
+        panModifierRef.current || activeToolRef.current === "pan";
       canvasRef.current.style.cursor = shouldGrab
         ? "grab"
         : activeToolRef.current === "select"
-          ? "default"
-          : "crosshair";
+        ? "default"
+        : "crosshair";
     }
   };
 
@@ -628,16 +676,18 @@ const PixiCanvas = ({ projectId }) => {
     container.pivot.copyFrom(pixiObject.pivot);
     container.zIndex = (pixiObject.zIndex ?? 0) + 1000;
     container.eventMode = includeHandles ? "passive" : "none";
+    container.interactiveChildren = includeHandles;
 
     const outline = new Graphics();
     outline.lineStyle(2 / Math.max(zoom, 0.0001), 0x3b82f6, 1);
     outline.drawRect(0, 0, element.width, element.height);
+    outline.eventMode = "none";
     container.addChild(outline);
 
     const handles = [];
     if (includeHandles) {
       const handleSize = 10 / Math.max(zoom, 0.0001);
-      
+
       // Add rotation handle above the top-center
       const rotationHandle = new Graphics();
       rotationHandle.lineStyle(1.5 / Math.max(zoom, 0.0001), 0x22c55e, 1);
@@ -652,7 +702,7 @@ const PixiCanvas = ({ projectId }) => {
       rotationHandle.on("pointerdown", (ev) => beginRotate(ev, element));
       container.addChild(rotationHandle);
       handles.push(rotationHandle);
-      
+
       handleConfigs.forEach((config) => {
         const handle = new Graphics();
         handle.lineStyle(1.5 / Math.max(zoom, 0.0001), 0x1d4ed8, 1);
@@ -665,7 +715,10 @@ const PixiCanvas = ({ projectId }) => {
           Math.max(handleSize / 4, 1 / Math.max(zoom, 0.0001))
         );
         handle.endFill();
-        handle.position.set(config.x * element.width, config.y * element.height);
+        handle.position.set(
+          config.x * element.width,
+          config.y * element.height
+        );
         handle.eventMode = "static";
         handle.cursor = config.cursor;
         handle.alpha = 0.95;
@@ -696,7 +749,10 @@ const PixiCanvas = ({ projectId }) => {
 
     const worldMatrix = displayObject.worldTransform.clone();
     const inverseMatrix = worldMatrix.clone().invert();
-    const startGlobalPoint = new Point(event.data.global.x, event.data.global.y);
+    const startGlobalPoint = new Point(
+      event.data.global.x,
+      event.data.global.y
+    );
     const startLocalPoint = inverseMatrix.apply(startGlobalPoint.clone());
 
     resizeStateRef.current = {
@@ -728,11 +784,17 @@ const PixiCanvas = ({ projectId }) => {
     }
 
     if (handleConfig.id.includes("s")) {
-      newHeight = Math.max(MIN_ELEMENT_SIZE, startElement.height + deltaLocal.y);
+      newHeight = Math.max(
+        MIN_ELEMENT_SIZE,
+        startElement.height + deltaLocal.y
+      );
     }
 
     if (handleConfig.id.includes("w")) {
-      const desiredWidth = Math.max(MIN_ELEMENT_SIZE, startElement.width - deltaLocal.x);
+      const desiredWidth = Math.max(
+        MIN_ELEMENT_SIZE,
+        startElement.width - deltaLocal.x
+      );
       const appliedDelta = startElement.width - desiredWidth;
       const worldOffset = applyLocalDeltaToWorld(worldMatrix, appliedDelta, 0);
       newWidth = desiredWidth;
@@ -741,7 +803,10 @@ const PixiCanvas = ({ projectId }) => {
     }
 
     if (handleConfig.id.includes("n")) {
-      const desiredHeight = Math.max(MIN_ELEMENT_SIZE, startElement.height - deltaLocal.y);
+      const desiredHeight = Math.max(
+        MIN_ELEMENT_SIZE,
+        startElement.height - deltaLocal.y
+      );
       const appliedDelta = startElement.height - desiredHeight;
       const worldOffset = applyLocalDeltaToWorld(worldMatrix, 0, appliedDelta);
       newHeight = desiredHeight;
@@ -760,6 +825,7 @@ const PixiCanvas = ({ projectId }) => {
   const applyResizePreview = (state, preview) => {
     const { displayObject, overlay, startElement } = state;
     if (!displayObject || !overlay) return;
+    const currentZoom = useEditorStore.getState().zoom;
 
     if (displayObject instanceof Graphics) {
       redrawElementGraphics(displayObject, { ...startElement, ...preview });
@@ -775,25 +841,28 @@ const PixiCanvas = ({ projectId }) => {
 
     overlay.container.position.set(preview.x, preview.y);
     overlay.outline.clear();
-    overlay.outline.lineStyle(2 / Math.max(zoom, 0.0001), 0x3b82f6, 1);
+    overlay.outline.lineStyle(2 / Math.max(currentZoom, 0.0001), 0x3b82f6, 1);
     overlay.outline.drawRect(0, 0, preview.width, preview.height);
 
     if (overlay.includeHandles) {
-      const handleSize = 10 / Math.max(zoom, 0.0001);
+      const handleSize = 10 / Math.max(currentZoom, 0.0001);
       overlay.handles.forEach((handle) => {
         const config = handle.handleConfig;
         handle.clear();
-        handle.lineStyle(1.5 / Math.max(zoom, 0.0001), 0x1d4ed8, 1);
+        handle.lineStyle(1.5 / Math.max(currentZoom, 0.0001), 0x1d4ed8, 1);
         handle.beginFill(0xffffff);
         handle.drawRoundedRect(
           -handleSize / 2,
           -handleSize / 2,
           handleSize,
           handleSize,
-          Math.max(handleSize / 4, 1 / Math.max(zoom, 0.0001))
+          Math.max(handleSize / 4, 1 / Math.max(currentZoom, 0.0001))
         );
         handle.endFill();
-        handle.position.set(config.x * preview.width, config.y * preview.height);
+        handle.position.set(
+          config.x * preview.width,
+          config.y * preview.height
+        );
       });
     }
   };
@@ -819,8 +888,13 @@ const PixiCanvas = ({ projectId }) => {
     if (!state) return;
 
     const preview = state.preview || state.startElement;
-    const snappedX = canvasSettings.snapToGrid ? snapValue(preview.x) : preview.x;
-    const snappedY = canvasSettings.snapToGrid ? snapValue(preview.y) : preview.y;
+    const { canvasSettings: currentCanvasSettings } = useEditorStore.getState();
+    const snappedX = currentCanvasSettings.snapToGrid
+      ? snapValue(preview.x)
+      : preview.x;
+    const snappedY = currentCanvasSettings.snapToGrid
+      ? snapValue(preview.y)
+      : preview.y;
     const updates = {
       x: snappedX,
       y: snappedY,
@@ -836,8 +910,13 @@ const PixiCanvas = ({ projectId }) => {
     });
 
     if (canvasRef.current) {
-      const shouldGrab = panModifierRef.current || activeToolRef.current === "pan";
-      canvasRef.current.style.cursor = shouldGrab ? "grab" : activeToolRef.current === "select" ? "default" : "crosshair";
+      const shouldGrab =
+        panModifierRef.current || activeToolRef.current === "pan";
+      canvasRef.current.style.cursor = shouldGrab
+        ? "grab"
+        : activeToolRef.current === "select"
+        ? "default"
+        : "crosshair";
     }
 
     resizeStateRef.current = null;
@@ -908,7 +987,7 @@ const PixiCanvas = ({ projectId }) => {
     if (state.overlay && state.overlay.container) {
       state.overlay.container.rotation = newRotation;
     }
-    
+
     // Update display object rotation
     if (state.displayObject) {
       state.displayObject.rotation = newRotation;
@@ -920,18 +999,21 @@ const PixiCanvas = ({ projectId }) => {
     if (!state) return;
 
     // Use the current rotation from state, or get from element
-    const currentRotation = state.currentRotation !== undefined 
-      ? state.currentRotation 
-      : (elements.find((el) => el.id === state.elementId)?.rotation || 0);
-    
+    const { elements: currentElements } = useEditorStore.getState();
+    const currentRotation =
+      state.currentRotation !== undefined
+        ? state.currentRotation
+        : currentElements.find((el) => el.id === state.elementId)?.rotation ||
+          0;
+
     // Snap final rotation to 45-degree increments
     const degrees = (currentRotation * 180) / Math.PI;
     const snappedDegrees = Math.round(degrees / 45) * 45;
     const finalRotation = (snappedDegrees * Math.PI) / 180;
 
     updateElement(state.elementId, { rotation: finalRotation });
-    
-    const element = elements.find((el) => el.id === state.elementId);
+
+    const element = currentElements.find((el) => el.id === state.elementId);
     if (element) {
       socketService.emitElementUpdate(projectId, {
         ...element,
@@ -941,16 +1023,22 @@ const PixiCanvas = ({ projectId }) => {
     }
 
     if (canvasRef.current) {
-      const shouldGrab = panModifierRef.current || activeToolRef.current === "pan";
-      canvasRef.current.style.cursor = shouldGrab ? "grab" : activeToolRef.current === "select" ? "default" : "crosshair";
+      const shouldGrab =
+        panModifierRef.current || activeToolRef.current === "pan";
+      canvasRef.current.style.cursor = shouldGrab
+        ? "grab"
+        : activeToolRef.current === "select"
+        ? "default"
+        : "crosshair";
     }
 
     rotateStateRef.current = null;
   };
 
   const findElementAtPosition = (x, y) => {
-    for (let i = elements.length - 1; i >= 0; i--) {
-      const element = elements[i];
+    const { elements: currentElements } = useEditorStore.getState();
+    for (let i = currentElements.length - 1; i >= 0; i--) {
+      const element = currentElements[i];
       if (!element.visible) continue;
       const displayObject = elementsMapRef.current.get(element.id);
       if (!displayObject) continue;
@@ -1066,8 +1154,9 @@ const PixiCanvas = ({ projectId }) => {
   };
 
   const updateFreeDrawShape = () => {
-    if (!freeDrawPathRef.current || freeDrawPathRef.current.points.length < 1) return;
-    
+    if (!freeDrawPathRef.current || freeDrawPathRef.current.points.length < 1)
+      return;
+
     const points = freeDrawPathRef.current.points;
     // Ensure we have at least 2 points for proper bounds calculation
     if (points.length === 1) {
@@ -1075,7 +1164,7 @@ const PixiCanvas = ({ projectId }) => {
       const firstPoint = points[0];
       points.push({ x: firstPoint.x + 0.1, y: firstPoint.y + 0.1 });
     }
-    
+
     const bounds = calculatePathBounds(points);
     // Ensure minimum size
     const minSize = 1;
@@ -1085,8 +1174,9 @@ const PixiCanvas = ({ projectId }) => {
       width: Math.max(bounds.width, minSize),
       height: Math.max(bounds.height, minSize),
     };
-    
+
     if (!freeDrawPathRef.current.elementId) {
+      const { elements: currentElements } = useEditorStore.getState();
       const element = {
         id: `freehand_${Date.now()}`,
         type: "freehand",
@@ -1094,7 +1184,10 @@ const PixiCanvas = ({ projectId }) => {
         y: finalBounds.y,
         width: finalBounds.width,
         height: finalBounds.height,
-        points: points.map(p => ({ x: p.x - finalBounds.x, y: p.y - finalBounds.y })),
+        points: points.map((p) => ({
+          x: p.x - finalBounds.x,
+          y: p.y - finalBounds.y,
+        })),
         stroke: "#000000",
         strokeWidth: 3,
         fill: null,
@@ -1102,21 +1195,26 @@ const PixiCanvas = ({ projectId }) => {
         opacity: 1,
         visible: true,
         locked: false,
-        zIndex: elements.length,
+        zIndex: currentElements.length,
         blendMode: "normal",
         effects: {},
       };
       addElement(element);
       freeDrawPathRef.current.elementId = element.id;
     } else {
-      const element = elements.find((el) => el.id === freeDrawPathRef.current.elementId);
+      const element = useEditorStore
+        .getState()
+        .elements.find((el) => el.id === freeDrawPathRef.current.elementId);
       if (element) {
         updateElement(freeDrawPathRef.current.elementId, {
           x: finalBounds.x,
           y: finalBounds.y,
           width: finalBounds.width,
           height: finalBounds.height,
-          points: points.map(p => ({ x: p.x - finalBounds.x, y: p.y - finalBounds.y })),
+          points: points.map((p) => ({
+            x: p.x - finalBounds.x,
+            y: p.y - finalBounds.y,
+          })),
         });
       }
     }
@@ -1124,7 +1222,9 @@ const PixiCanvas = ({ projectId }) => {
 
   const finalizeFreeDrawShape = () => {
     if (freeDrawPathRef.current && freeDrawPathRef.current.elementId) {
-      const element = elements.find((el) => el.id === freeDrawPathRef.current.elementId);
+      const element = useEditorStore
+        .getState()
+        .elements.find((el) => el.id === freeDrawPathRef.current.elementId);
       if (element) {
         socketService.emitElementAdd(projectId, element);
       }
@@ -1133,19 +1233,19 @@ const PixiCanvas = ({ projectId }) => {
 
   const calculatePathBounds = (points) => {
     if (points.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
-    
+
     let minX = points[0].x;
     let minY = points[0].y;
     let maxX = points[0].x;
     let maxY = points[0].y;
-    
-    points.forEach(p => {
+
+    points.forEach((p) => {
       minX = Math.min(minX, p.x);
       minY = Math.min(minY, p.y);
       maxX = Math.max(maxX, p.x);
       maxY = Math.max(maxY, p.y);
     });
-    
+
     return {
       x: minX,
       y: minY,
@@ -1189,7 +1289,9 @@ const PixiCanvas = ({ projectId }) => {
     elementsMapRef.current.clear();
     selectionOverlaysRef.current.clear();
 
-    const sorted = [...elements].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+    const sorted = [...elements].sort(
+      (a, b) => (a.zIndex || 0) - (b.zIndex || 0)
+    );
     const usedTextureSources = new Set();
 
     sorted.forEach((element) => {
@@ -1286,10 +1388,17 @@ const PixiCanvas = ({ projectId }) => {
       pixiObject.rotation = element.rotation || 0;
       pixiObject.alpha = element.opacity || 1;
       pixiObject.eventMode = "static";
-      pixiObject.cursor = activeTool === "select" ? "move" : activeTool === "pan" ? "grab" : "pointer";
+      pixiObject.cursor =
+        activeTool === "select"
+          ? "move"
+          : activeTool === "pan"
+          ? "grab"
+          : "pointer";
       pixiObject.accessible = true;
-      pixiObject.accessibleTitle = element.accessibleName || `${element.type} element`;
-      pixiObject.accessibleHint = "Drag to move. Use toolbar actions for other transforms.";
+      pixiObject.accessibleTitle =
+        element.accessibleName || `${element.type} element`;
+      pixiObject.accessibleHint =
+        "Drag to move. Use toolbar actions for other transforms.";
       pixiObject.hitArea = new Rectangle(0, 0, element.width, element.height);
       pixiObject.name = element.id;
       pixiObject.zIndex = element.zIndex ?? 0;
@@ -1299,27 +1408,31 @@ const PixiCanvas = ({ projectId }) => {
       // Add click handler for element selection and dragging
       pixiObject.off("pointerdown");
       pixiObject.on("pointerdown", (event) => {
-        if (activeTool === "select" && !panModifierRef.current) {
+        if (activeToolRef.current === "select" && !panModifierRef.current) {
           event.stopPropagation();
           const worldPos = toWorldCoordinates(event.data.global);
-          selectElement(element.id, event.data.originalEvent?.shiftKey || false);
-          
-      // Get the element's current position for dragging
-      isDraggingRef.current = true;
-      dragStartRef.current = { 
-        x: worldPos.x, 
-        y: worldPos.y,
-      };
-      // Store initial positions for all selected elements
-      dragElementsRef.current.clear();
-      // Get current selected IDs after selection (which may have changed)
-      const currentSelectedIds = useEditorStore.getState().selectedIds;
-      currentSelectedIds.forEach((id) => {
-        const el = elements.find((e) => e.id === id);
-        if (el) {
-          dragElementsRef.current.set(id, { x: el.x, y: el.y });
-        }
-      });
+          selectElement(
+            element.id,
+            event.data.originalEvent?.shiftKey || false
+          );
+
+          // Get the element's current position for dragging
+          isDraggingRef.current = true;
+          dragStartRef.current = {
+            x: worldPos.x,
+            y: worldPos.y,
+          };
+          // Store initial positions for all selected elements using latest state
+          dragElementsRef.current.clear();
+          const currentState = useEditorStore.getState();
+          const currentSelectedIds = currentState.selectedIds;
+          const currentElements = currentState.elements;
+          currentSelectedIds.forEach((id) => {
+            const el = currentElements.find((e) => e.id === id);
+            if (el) {
+              dragElementsRef.current.set(id, { x: el.x, y: el.y });
+            }
+          });
         }
       });
 
@@ -1327,7 +1440,10 @@ const PixiCanvas = ({ projectId }) => {
       elementsMapRef.current.set(element.id, pixiObject);
 
       if (selectedIds.includes(element.id)) {
-        const includeHandles = selectedIds.length === 1 && selectedIds[0] === element.id && !element.locked;
+        const includeHandles =
+          selectedIds.length === 1 &&
+          selectedIds[0] === element.id &&
+          !element.locked;
         createSelectionOverlay(element, pixiObject, includeHandles);
       }
     });
@@ -1377,13 +1493,21 @@ const PixiCanvas = ({ projectId }) => {
     const offsetMinorX = (pan.x * zoom) % scaledMinor;
     const offsetMinorY = (pan.y * zoom) % scaledMinor;
 
-    for (let x = -scaledMinor * 4; x <= width + scaledMinor * 4; x += scaledMinor) {
+    for (
+      let x = -scaledMinor * 4;
+      x <= width + scaledMinor * 4;
+      x += scaledMinor
+    ) {
       const posX = x - offsetMinorX;
       gridLayer.moveTo(posX, 0);
       gridLayer.lineTo(posX, height);
     }
 
-    for (let y = -scaledMinor * 4; y <= height + scaledMinor * 4; y += scaledMinor) {
+    for (
+      let y = -scaledMinor * 4;
+      y <= height + scaledMinor * 4;
+      y += scaledMinor
+    ) {
       const posY = y - offsetMinorY;
       gridLayer.moveTo(0, posY);
       gridLayer.lineTo(width, posY);
@@ -1393,13 +1517,21 @@ const PixiCanvas = ({ projectId }) => {
     const offsetMajorX = (pan.x * zoom) % scaledMajor;
     const offsetMajorY = (pan.y * zoom) % scaledMajor;
 
-    for (let x = -scaledMajor * 4; x <= width + scaledMajor * 4; x += scaledMajor) {
+    for (
+      let x = -scaledMajor * 4;
+      x <= width + scaledMajor * 4;
+      x += scaledMajor
+    ) {
       const posX = x - offsetMajorX;
       gridLayer.moveTo(posX, 0);
       gridLayer.lineTo(posX, height);
     }
 
-    for (let y = -scaledMajor * 4; y <= height + scaledMajor * 4; y += scaledMajor) {
+    for (
+      let y = -scaledMajor * 4;
+      y <= height + scaledMajor * 4;
+      y += scaledMajor
+    ) {
       const posY = y - offsetMajorY;
       gridLayer.moveTo(0, posY);
       gridLayer.lineTo(width, posY);
@@ -1455,12 +1587,18 @@ const PixiCanvas = ({ projectId }) => {
     const filters = [];
 
     if (effects.blur?.enabled) {
-      const blurStrength = Math.max(0, Math.min(30, effects.blur.strength ?? 4));
+      const blurStrength = Math.max(
+        0,
+        Math.min(30, effects.blur.strength ?? 4)
+      );
       filters.push(new BlurFilter(blurStrength));
     }
 
     if (effects.grayscale?.enabled) {
-      const grayscaleAmount = Math.max(0, Math.min(1, effects.grayscale.amount ?? 1));
+      const grayscaleAmount = Math.max(
+        0,
+        Math.min(1, effects.grayscale.amount ?? 1)
+      );
       const colorMatrix = new ColorMatrixFilter();
       colorMatrix.greyscale(grayscaleAmount, false);
       filters.push(colorMatrix);

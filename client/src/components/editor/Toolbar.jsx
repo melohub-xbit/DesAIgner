@@ -33,7 +33,7 @@ const Toolbar = ({ project, projectId, onProjectUpdate }) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [projectName, setProjectName] = useState(project?.name || "");
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const {
     activeTool,
     setActiveTool,

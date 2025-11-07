@@ -54,70 +54,65 @@ const Editor = () => {
     
     // 3. Keyboard shortcuts (from conflicting branch)
     const handleKeyDown = (e) => {
-      const { 
-        setActiveTool, 
-        undo, 
-        redo, 
-        deleteSelected, 
-        selectedIds, 
-        elements, 
-        updateElement, 
-        canvasSettings,
-        clearSelection 
-      } = useEditorStore.getState();
-      
+      const { setActiveTool, undo, redo, deleteSelected } =
+        useEditorStore.getState();
+
       // Tool shortcuts
-      if (e.key === 'v' || e.key === 'V') {
-        setActiveTool('select');
-      } else if (e.key === 'h' || e.key === 'H') {
-        setActiveTool('pan');
-      } else if (e.key === 'r' || e.key === 'R') {
-        setActiveTool('rectangle');
-      } else if (e.key === 'c' || e.key === 'C') {
-        setActiveTool('circle');
-      } else if (e.key === 'y' || e.key === 'Y') {
-        setActiveTool('triangle');
-      } else if (e.key === 'l' || e.key === 'L') {
-        setActiveTool('line');
-      } else if (e.key === 'a' || e.key === 'A') {
-        setActiveTool('arrow');
-      } else if (e.key === 't' || e.key === 'T') {
-        setActiveTool('text');
+      if (e.key === "v" || e.key === "V") {
+        setActiveTool("select");
+      } else if (e.key === "h" || e.key === "H") {
+        setActiveTool("pan");
+      } else if (e.key === "r" || e.key === "R") {
+        setActiveTool("rectangle");
+      } else if (e.key === "c" || e.key === "C") {
+        setActiveTool("circle");
+      } else if (e.key === "y" || e.key === "Y") {
+        setActiveTool("triangle");
+      } else if (e.key === "l" || e.key === "L") {
+        setActiveTool("line");
+      } else if (e.key === "a" || e.key === "A") {
+        setActiveTool("arrow");
+      } else if (e.key === "t" || e.key === "T") {
+        setActiveTool("text");
       }
-      
+
       // Undo/Redo
       if (e.ctrlKey || e.metaKey) {
-        if (e.shiftKey && e.key === 'z') {
+        if (e.shiftKey && e.key === "z") {
           e.preventDefault();
           redo();
-        } else if (e.key === 'z') {
+        } else if (e.key === "z") {
           e.preventDefault();
           undo();
         }
       }
-      
+
       // Delete
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.key === "Delete" || e.key === "Backspace") {
+        const { selectedIds } = useEditorStore.getState();
         if (selectedIds.length > 0) {
           e.preventDefault();
           deleteSelected();
         }
       }
-      
+
       // Arrow key nudging
       if (
-        e.key === 'ArrowUp' ||
-        e.key === 'ArrowDown' ||
-        e.key === 'ArrowLeft' ||
-        e.key === 'ArrowRight'
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight"
       ) {
+        const { selectedIds, elements, updateElement, canvasSettings } =
+          useEditorStore.getState();
         if (selectedIds.length > 0) {
           e.preventDefault();
           const baseStep = e.shiftKey ? 10 : 1;
-          // NOTE: canvasSettings might be null/undefined initially, added a safe fallback
-          const step = canvasSettings?.snapToGrid ? GRID_MINOR : baseStep; 
-          const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
-          const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+          const step = canvasSettings?.snapToGrid ? GRID_MINOR : baseStep;
+          const dx =
+            e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
+          const dy =
+            e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
           selectedIds.forEach((id) => {
             const element = elements.find((el) => el.id === id);
             if (element && !element.locked) {
@@ -137,17 +132,17 @@ const Editor = () => {
       }
 
       // Escape to deselect
-      if (e.key === 'Escape') {
-        clearSelection();
-        setActiveTool('select');
+      if (e.key === "Escape") {
+        useEditorStore.getState().clearSelection();
+        setActiveTool("select");
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
 
     // Cleanup logic (from both branches)
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
       socketService.leaveProject(projectId);
       socketService.disconnect();
     };
@@ -195,7 +190,11 @@ const Editor = () => {
 
   return (
     <div className="h-screen bg-gray-900 flex flex-col overflow-hidden">
-      <Toolbar project={project} projectId={projectId} onProjectUpdate={handleProjectUpdate} />
+      <Toolbar
+        project={project}
+        projectId={projectId}
+        onProjectUpdate={handleProjectUpdate}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar projectId={projectId} />
