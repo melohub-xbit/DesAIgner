@@ -1,6 +1,6 @@
 const express = require("express");
-const axios = require("axios");
 const auth = require("../middleware/auth");
+const { generateDesign, AIServiceError } = require("../services/aiDesigner");
 
 const router = express.Router();
 
@@ -113,6 +113,42 @@ router.post("/auto-align", auth, async (req, res) => {
   } catch (error) {
     console.error("Auto-align error:", error);
     res.status(500).json({ error: "Failed to align elements" });
+  }
+});
+
+// AI Canvas Design (Gemini)
+router.post("/design", auth, async (req, res) => {
+  try {
+    const { prompt, canvas, existingElements, palette } = req.body || {};
+
+    const result = await generateDesign({
+      prompt,
+      canvas,
+      existingElements,
+      palette,
+      userContext: {
+        id: req.user?._id?.toString(),
+        name: req.user?.username,
+      },
+    });
+
+    res.json({
+      elements: result.elements,
+      rationale: result.rationale,
+      insights: result.insights,
+      usage: result.usage,
+    });
+  } catch (error) {
+    if (error instanceof AIServiceError) {
+      return res
+        .status(error.statusCode)
+        .json({ error: error.message, code: error.code });
+    }
+
+    console.error("AI design error:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to generate design", code: "AI_DESIGN_FAILURE" });
   }
 });
 
