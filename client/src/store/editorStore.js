@@ -125,7 +125,23 @@ export const useEditorStore = create((set, get) => ({
   },
 
   // Collaboration
-  setActiveUsers: (users) => set({ activeUsers: users }),
+  setActiveUsers: (users) =>
+    set((state) => {
+      const activeSocketIds = new Set(
+        users.filter((u) => u?.socketId).map((u) => u.socketId)
+      );
+      const prunedCursors = new Map();
+      state.userCursors.forEach((value, key) => {
+        if (activeSocketIds.has(key)) {
+          prunedCursors.set(key, value);
+        }
+      });
+
+      return {
+        activeUsers: users,
+        userCursors: prunedCursors,
+      };
+    }),
 
   updateUserCursor: (socketId, user, position) => {
     const { userCursors } = get();

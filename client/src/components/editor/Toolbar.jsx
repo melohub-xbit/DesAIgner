@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
   ArrowLeft,
-  Save,
   Users,
   MousePointer2,
   Hand,
@@ -23,6 +22,7 @@ import {
   Edit2,
   Check,
   X,
+  Settings,
 } from "lucide-react";
 import { useEditorStore } from "../../store/editorStore";
 import { projectsAPI } from "../../utils/api";
@@ -259,6 +259,15 @@ const Toolbar = ({ project, projectId, onProjectUpdate }) => {
       {/* Right section */}
       <div className="flex items-center gap-2">
         <button
+          onClick={() => navigate(`/projects/${projectId}/settings`)}
+          className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-gray-200"
+          title="Project settings"
+        >
+          <Settings className="w-4 h-4" />
+          <span className="text-sm">Settings</span>
+        </button>
+
+        <button
           onClick={handleAI}
           className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-white"
           title="AI Suggestions"
@@ -278,7 +287,7 @@ const Toolbar = ({ project, projectId, onProjectUpdate }) => {
         <div className="flex items-center gap-2 px-3 py-2 bg-gray-700 rounded-lg">
           <Users className="w-4 h-4 text-gray-300" />
           <span className="text-sm text-gray-300">
-            {activeUsers.length + 1}
+            {Math.max(activeUsers.length, 1)}
           </span>
         </div>
       </div>
