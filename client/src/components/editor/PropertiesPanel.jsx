@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { HexColorPicker } from "react-colorful";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Trash2,
   Lock,
@@ -11,6 +12,8 @@ import {
   Edit2,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
+  Sliders,
 } from "lucide-react";
 import { useEditorStore } from "../../store/editorStore";
 import socketService from "../../utils/socket";
@@ -97,45 +100,106 @@ const PropertiesPanel = ({ projectId }) => {
 
   if (!selectedElement) {
     return (
-      <div
+      <motion.div
         ref={panelRef}
-        className="bg-gray-800 border-l border-gray-700 p-4 relative shrink-0 overflow-y-auto h-full shadow-lg transition-all duration-300"
-        style={{ width: isCollapsed ? "48px" : `${width}px` }}
+        initial={{ x: 20, opacity: 0 }}
+        animate={{ 
+          x: 0, 
+          opacity: 1,
+          width: isCollapsed ? "48px" : `${width}px`
+        }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="bg-black/90 backdrop-blur-xl border-l border-white/10 p-6 relative shrink-0 h-full shadow-2xl flex flex-col items-center justify-center overflow-hidden"
       >
-        {/* Collapse/Expand Button */}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute top-4 -left-3 z-30 bg-gray-700 hover:bg-gray-600 text-white rounded-full p-1 border-2 border-gray-800 shadow-lg transition-colors"
-          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronLeft className="w-4 h-4" />
+        {/* Gradient overlay */}
+        <motion.div 
+          animate={{ opacity: isCollapsed ? 0 : 1 }}
+          transition={{ duration: 0.2 }}
+          className="absolute inset-0 bg-gradient-to-bl from-purple-950/20 via-transparent to-cyan-950/20 pointer-events-none" 
+        />
+        
+        {/* Collapsed state vertical text */}
+        <AnimatePresence>
+          {isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.2 }}
+              className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10"
+            >
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                className="flex flex-col items-center gap-2 cursor-pointer group"
+                onClick={() => setIsCollapsed(false)}
+              >
+                <Sliders className="w-5 h-5 text-purple-400 group-hover:text-purple-300 transition-colors" />
+                <div className="writing-mode-vertical text-xs font-medium text-gray-400 group-hover:text-white transition-colors tracking-wider">
+                  PROPERTIES
+                </div>
+              </motion.div>
+            </motion.div>
           )}
-        </button>
+        </AnimatePresence>
+        
+        {/* Collapse/Expand Button */}
+        <motion.button
+          whileHover={{ scale: 1.1, rotate: isCollapsed ? 0 : -5 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute top-4 -left-3 z-30 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-full p-1.5 border-2 border-black shadow-lg shadow-pink-500/30 transition-all duration-300"
+          title={isCollapsed ? "Expand properties" : "Collapse properties"}
+        >
+          <motion.div
+            animate={{ rotate: isCollapsed ? 180 : 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </motion.div>
+        </motion.button>
 
-        {!isCollapsed && (
-          <p className="text-gray-500 text-sm">
-            Select an element to edit properties
-          </p>
-        )}
+        <AnimatePresence mode="wait">
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+              className="text-center relative z-10"
+            >
+              <div className="relative inline-block mb-4">
+                <div className="absolute -inset-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-20" />
+                <Sliders className="relative w-16 h-16 text-gray-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-2">
+                No Selection
+              </h3>
+              <p className="text-gray-500 text-sm max-w-[200px]">
+                Select an element to edit its properties
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Resize handle */}
         {!isCollapsed && (
           <div
-            className="absolute top-0 left-0 w-2 h-full cursor-col-resize hover:bg-blue-500 transition-colors z-20"
+            className="absolute top-0 left-0 w-1 h-full cursor-col-resize hover:bg-gradient-to-b hover:from-purple-500 hover:to-pink-500 transition-all z-20"
             onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               setIsResizing(true);
             }}
             style={{
-              background: isResizing ? "#3b82f6" : "transparent",
+              background: isResizing
+                ? "linear-gradient(to bottom, rgb(147, 51, 234), rgb(236, 72, 153))"
+                : "transparent",
             }}
-          />
+          >
+            <div className="absolute inset-0 w-3 -right-1" />
+          </div>
         )}
-      </div>
+      </motion.div>
     );
   }
 
@@ -180,146 +244,213 @@ const PropertiesPanel = ({ projectId }) => {
   };
 
   return (
-    <div
+    <motion.div
       ref={panelRef}
-      className="bg-gray-800 border-l border-gray-700 overflow-y-auto relative shrink-0 flex flex-col h-full shadow-lg transition-all duration-300"
-      style={{ width: isCollapsed ? "48px" : `${width}px` }}
+      initial={{ x: 20, opacity: 0 }}
+      animate={{ 
+        x: 0, 
+        opacity: 1,
+        width: isCollapsed ? "48px" : `${width}px`
+      }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="bg-black/90 backdrop-blur-xl border-l border-white/10 relative shrink-0 flex flex-col h-full shadow-2xl overflow-hidden"
     >
+      {/* Gradient overlay */}
+      <motion.div 
+        animate={{ opacity: isCollapsed ? 0 : 1 }}
+        transition={{ duration: 0.2 }}
+        className="absolute inset-0 bg-gradient-to-bl from-purple-950/20 via-transparent to-pink-950/20 pointer-events-none" 
+      />
+      
+      {/* Collapsed state vertical text */}
+      <AnimatePresence>
+        {isCollapsed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ delay: 0.2 }}
+            className="absolute inset-0 flex flex-col items-center justify-center gap-6 z-10"
+          >
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              className="flex flex-col items-center gap-2 cursor-pointer group"
+              onClick={() => setIsCollapsed(false)}
+            >
+              <Sparkles className="w-5 h-5 text-purple-400 group-hover:text-purple-300 transition-colors" />
+              <div className="writing-mode-vertical text-xs font-medium text-gray-400 group-hover:text-white transition-colors tracking-wider">
+                PROPERTIES
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       {/* Collapse/Expand Button */}
-      <button
+      <motion.button
+        whileHover={{ scale: 1.1, rotate: isCollapsed ? 0 : -5 }}
+        whileTap={{ scale: 0.9 }}
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute top-4 -left-3 z-30 bg-gray-700 hover:bg-gray-600 text-white rounded-full p-1 border-2 border-gray-800 shadow-lg transition-colors"
+        className="absolute top-4 -left-3 z-30 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-full p-1.5 border-2 border-black shadow-lg shadow-pink-500/30 transition-all duration-300"
         title={isCollapsed ? "Expand properties" : "Collapse properties"}
       >
-        {isCollapsed ? (
-          <ChevronLeft className="w-4 h-4" />
-        ) : (
+        <motion.div
+          animate={{ rotate: isCollapsed ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
           <ChevronRight className="w-4 h-4" />
-        )}
-      </button>
+        </motion.div>
+      </motion.button>
 
       {/* Resize handle */}
       {!isCollapsed && (
         <div
-          className="absolute top-0 left-0 w-2 h-full cursor-col-resize hover:bg-blue-500 transition-colors z-20"
+          className="absolute top-0 left-0 w-1 h-full cursor-col-resize hover:bg-gradient-to-b hover:from-purple-500 hover:to-pink-500 transition-all z-20"
           onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
             setIsResizing(true);
           }}
           style={{
-            background: isResizing ? "#3b82f6" : "transparent",
+            background: isResizing
+              ? "linear-gradient(to bottom, rgb(147, 51, 234), rgb(236, 72, 153))"
+              : "transparent",
           }}
-        />
+        >
+          <div className="absolute inset-0 w-3 -right-1" />
+        </div>
       )}
 
-      {!isCollapsed && (
-        <>
-          <div className="p-4 border-b border-gray-700 shrink-0">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-white font-medium">Properties</h3>
-              <button
-                onClick={() => setIsRenaming(!isRenaming)}
-                className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
-                title="Rename"
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
-            </div>
-            {isRenaming ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={elementName}
-                  onChange={(e) => setElementName(e.target.value)}
-                  onBlur={() => {
-                    handleUpdate({ name: elementName });
-                    setIsRenaming(false);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+      <AnimatePresence mode="wait">
+        {!isCollapsed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col h-full relative z-10 overflow-hidden"
+          >
+            <div className="p-4 border-b border-white/10 shrink-0 bg-black/50">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-white font-semibold">Properties</h3>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setIsRenaming(!isRenaming)}
+                  className="p-1.5 hover:bg-black/70 rounded-lg text-gray-400 hover:text-white transition-colors"
+                  title="Rename"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </motion.button>
+              </div>
+              {isRenaming ? (
+                <motion.div 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    type="text"
+                    value={elementName}
+                    onChange={(e) => setElementName(e.target.value)}
+                    onBlur={() => {
                       handleUpdate({ name: elementName });
                       setIsRenaming(false);
-                    } else if (e.key === "Escape") {
-                      setElementName(selectedElement.name || "");
-                      setIsRenaming(false);
-                    }
-                  }}
-                  className="flex-1 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
-                  autoFocus
-                />
-              </div>
-            ) : (
-              <div>
-                <p className="text-gray-400 text-sm capitalize">
-                  {selectedElement.type}
-                </p>
-                {selectedElement.name && (
-                  <p className="text-gray-500 text-xs mt-1">
-                    {selectedElement.name}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleUpdate({ name: elementName });
+                        setIsRenaming(false);
+                      } else if (e.key === "Escape") {
+                        setElementName(selectedElement.name || "");
+                        setIsRenaming(false);
+                      }
+                    }}
+                    className="flex-1 px-3 py-1.5 bg-black/50 border border-white/20 focus:border-purple-500/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    autoFocus
+                  />
+                </motion.div>
+              ) : (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-full text-xs text-purple-300 font-medium capitalize">
+                      {selectedElement.type}
+                    </span>
+                  </div>
+                  {selectedElement.name && (
+                    <p className="text-gray-400 text-sm mt-2 truncate">
+                      {selectedElement.name}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
 
-          <div className="p-4 space-y-4 overflow-y-auto flex-1">
+            <div className="p-4 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
             {/* Position & Size */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Position
-              </label>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-4 bg-gradient-to-b from-cyan-500 to-purple-500 rounded-full" />
+                <label className="block text-sm font-semibold text-white">
+                  Position
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-gray-400">X</label>
+                  <label className="text-xs text-gray-400 mb-1.5 block font-medium">X</label>
                   <input
                     type="number"
                     value={Math.round(selectedElement.x)}
                     onChange={(e) =>
                       handleUpdate({ x: Number(e.target.value) })
                     }
-                    className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+                    className="w-full px-3 py-2 bg-black/50 border border-white/20 focus:border-cyan-500/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-400">Y</label>
+                  <label className="text-xs text-gray-400 mb-1.5 block font-medium">Y</label>
                   <input
                     type="number"
                     value={Math.round(selectedElement.y)}
                     onChange={(e) =>
                       handleUpdate({ y: Number(e.target.value) })
                     }
-                    className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+                    className="w-full px-3 py-2 bg-black/50 border border-white/20 focus:border-cyan-500/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
                   />
                 </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Size
-              </label>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-4 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full" />
+                <label className="block text-sm font-semibold text-white">
+                  Size
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-gray-400">Width</label>
+                  <label className="text-xs text-gray-400 mb-1.5 block font-medium">Width</label>
                   <input
                     type="number"
                     value={Math.round(selectedElement.width)}
                     onChange={(e) =>
                       handleUpdate({ width: Number(e.target.value) })
                     }
-                    className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+                    className="w-full px-3 py-2 bg-black/50 border border-white/20 focus:border-purple-500/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-400">Height</label>
+                  <label className="text-xs text-gray-400 mb-1.5 block font-medium">Height</label>
                   <input
                     type="number"
                     value={Math.round(selectedElement.height)}
                     onChange={(e) =>
                       handleUpdate({ height: Number(e.target.value) })
                     }
-                    className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+                    className="w-full px-3 py-2 bg-black/50 border border-white/20 focus:border-purple-500/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
                   />
                 </div>
               </div>
@@ -672,47 +803,80 @@ const PropertiesPanel = ({ projectId }) => {
             </div>
 
             {/* Actions */}
-            <div className="pt-4 border-t border-gray-700 space-y-2">
-              <button
+            <div className="pt-6 border-t border-white/10 space-y-3">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1 h-4 bg-gradient-to-b from-pink-500 to-red-500 rounded-full" />
+                <label className="block text-sm font-semibold text-white">
+                  Actions
+                </label>
+              </div>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() =>
                   handleUpdate({ locked: !selectedElement.locked })
                 }
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-white text-sm transition-colors"
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  selectedElement.locked
+                    ? "bg-gradient-to-r from-amber-600/30 to-orange-600/30 border border-amber-500/50 text-amber-300 hover:from-amber-600/40 hover:to-orange-600/40"
+                    : "bg-black/50 hover:bg-black/70 border border-white/20 hover:border-white/30 text-white"
+                }`}
               >
                 {selectedElement.locked ? (
-                  <Lock className="w-4 h-4" />
+                  <>
+                    <Lock className="w-4 h-4" />
+                    Locked
+                  </>
                 ) : (
-                  <Unlock className="w-4 h-4" />
+                  <>
+                    <Unlock className="w-4 h-4" />
+                    Unlocked
+                  </>
                 )}
-                {selectedElement.locked ? "Unlock" : "Lock"}
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() =>
                   handleUpdate({ visible: !selectedElement.visible })
                 }
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-white text-sm transition-colors"
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  !selectedElement.visible
+                    ? "bg-gradient-to-r from-gray-600/30 to-slate-600/30 border border-gray-500/50 text-gray-300 hover:from-gray-600/40 hover:to-slate-600/40"
+                    : "bg-black/50 hover:bg-black/70 border border-white/20 hover:border-white/30 text-white"
+                }`}
               >
                 {selectedElement.visible ? (
-                  <Eye className="w-4 h-4" />
+                  <>
+                    <Eye className="w-4 h-4" />
+                    Visible
+                  </>
                 ) : (
-                  <EyeOff className="w-4 h-4" />
+                  <>
+                    <EyeOff className="w-4 h-4" />
+                    Hidden
+                  </>
                 )}
-                {selectedElement.visible ? "Hide" : "Show"}
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleDelete}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 rounded text-white text-sm transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 rounded-xl text-white text-sm font-medium transition-all duration-300 shadow-lg shadow-red-500/20 relative overflow-hidden group"
               >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </button>
+                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-pink-600 blur opacity-30 group-hover:opacity-50 transition-opacity" />
+                <Trash2 className="w-4 h-4 relative" />
+                <span className="relative">Delete</span>
+              </motion.button>
             </div>
           </div>
-        </>
-      )}
-    </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

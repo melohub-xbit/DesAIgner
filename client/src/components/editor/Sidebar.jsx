@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Assets } from "pixi.js";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Layers,
   Upload,
@@ -13,6 +14,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import { useEditorStore } from "../../store/editorStore";
 import { useDropzone } from "react-dropzone";
@@ -26,7 +28,7 @@ const Sidebar = ({ projectId }) => {
   const [uploading, setUploading] = useState(false);
   const [assets, setAssets] = useState([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
-  const [width, setWidth] = useState(256); // 64 * 4 = 256px (w-64)
+  const [width, setWidth] = useState(256);
   const [isResizing, setIsResizing] = useState(false);
   const [renamingAssetId, setRenamingAssetId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
@@ -125,7 +127,6 @@ const Sidebar = ({ projectId }) => {
     }
 
     setUploading(false);
-    // Reload assets after upload
     loadAssets();
   };
 
@@ -178,311 +179,483 @@ const Sidebar = ({ projectId }) => {
   ];
 
   return (
-    <div
+    <motion.div
       ref={sidebarRef}
-      className="bg-gray-800 border-r border-gray-700 flex flex-col relative shrink-0 h-full shadow-lg transition-all duration-300"
-      style={{ width: isCollapsed ? "48px" : `${width}px` }}
+      initial={{ x: -20, opacity: 0 }}
+      animate={{ 
+        x: 0, 
+        opacity: 1,
+        width: isCollapsed ? "48px" : `${width}px`
+      }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="bg-black/90 backdrop-blur-xl border-r border-white/10 flex flex-col relative shrink-0 h-full shadow-2xl"
     >
+      {/* Gradient overlay */}
+      <motion.div 
+        animate={{ opacity: isCollapsed ? 0 : 1 }}
+        transition={{ duration: 0.2 }}
+        className="absolute inset-0 bg-gradient-to-br from-cyan-950/20 via-transparent to-purple-950/20 pointer-events-none" 
+      />
+      
+      {/* Collapsed state vertical text */}
+      <AnimatePresence>
+        {isCollapsed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ delay: 0.2 }}
+            className="absolute inset-0 flex flex-col items-center justify-center gap-6 z-10"
+          >
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              className="flex flex-col items-center gap-2 cursor-pointer group"
+              onClick={() => setIsCollapsed(false)}
+            >
+              <Layers className="w-5 h-5 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
+              <div className="writing-mode-vertical text-xs font-medium text-gray-400 group-hover:text-white transition-colors tracking-wider">
+                LAYERS
+              </div>
+            </motion.div>
+            
+            <div className="w-6 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+            
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              className="flex flex-col items-center gap-2 cursor-pointer group"
+              onClick={() => {
+                setIsCollapsed(false);
+                setActiveTab("assets");
+              }}
+            >
+              <Upload className="w-5 h-5 text-purple-400 group-hover:text-purple-300 transition-colors" />
+              <div className="writing-mode-vertical text-xs font-medium text-gray-400 group-hover:text-white transition-colors tracking-wider">
+                ASSETS
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       {/* Collapse/Expand Button */}
-      <button
+      <motion.button
+        whileHover={{ scale: 1.1, rotate: isCollapsed ? 0 : 5 }}
+        whileTap={{ scale: 0.9 }}
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute top-4 -right-3 z-30 bg-gray-700 hover:bg-gray-600 text-white rounded-full p-1 border-2 border-gray-800 shadow-lg transition-colors"
+        animate={{ rotate: isCollapsed ? 0 : 0 }}
+        className="absolute top-4 -right-3 z-30 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white rounded-full p-1.5 border-2 border-black shadow-lg shadow-purple-500/30 transition-all duration-300"
         title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
-        {isCollapsed ? (
-          <ChevronRight className="w-4 h-4" />
-        ) : (
+        <motion.div
+          animate={{ rotate: isCollapsed ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
           <ChevronLeft className="w-4 h-4" />
-        )}
-      </button>
+        </motion.div>
+      </motion.button>
 
-      {!isCollapsed && (
-        <>
-          {/* Tab buttons */}
-          <div className="flex border-b border-gray-700">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 transition-colors ${
-                    activeTab === tab.id
-                      ? "bg-gray-700 text-white border-b-2 border-blue-500"
-                      : "text-gray-400 hover:bg-gray-750"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-sm">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
+      <AnimatePresence mode="wait">
+        {!isCollapsed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col h-full relative z-10"
+          >
+            {/* Tab buttons */}
+            <div className="flex border-b border-white/10 bg-black/50">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <motion.button
+                    key={tab.id}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative flex-1 flex items-center justify-center gap-2 py-3.5 transition-all duration-300 ${
+                      isActive
+                        ? "text-white"
+                        : "text-gray-400 hover:text-white hover:bg-black/50"
+                    }`}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute inset-0 bg-gradient-to-r from-cyan-600/20 to-purple-600/20 border-b-2 border-cyan-500"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                    <Icon className="w-4 h-4 relative z-10" />
+                    <span className="text-sm font-medium relative z-10">{tab.label}</span>
+                  </motion.button>
+                );
+              })}
+            </div>
 
-          {/* Tab content */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {activeTab === "layers" && (
-              <div className="space-y-2">
-                <h3 className="text-white font-medium mb-3">Layers</h3>
-                {elements.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No elements yet</p>
-                ) : (
-                  <div className="space-y-1">
-                    {[...elements].reverse().map((element) => (
-                      <div
-                        key={element.id}
-                        className={`p-2 rounded transition-colors ${
-                          selectedIds.includes(element.id)
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div
-                            className="flex-1 cursor-pointer"
-                            onClick={() => selectElement(element.id)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm truncate">
-                                {element.name ||
-                                  (element.type === "text"
-                                    ? element.text || "Text"
-                                    : element.type.charAt(0).toUpperCase() +
-                                      element.type.slice(1))}
-                              </span>
-                              <span className="text-xs opacity-75">
-                                {element.type}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateElement(element.id, {
-                                  visible: !element.visible,
-                                });
-                              }}
-                              className="p-1 hover:bg-gray-600 rounded"
-                              title={element.visible ? "Hide" : "Show"}
-                            >
-                              {element.visible ? (
-                                <Eye className="w-4 h-4" />
-                              ) : (
-                                <EyeOff className="w-4 h-4" />
-                              )}
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateElement(element.id, {
-                                  locked: !element.locked,
-                                });
-                              }}
-                              className="p-1 hover:bg-gray-600 rounded"
-                              title={element.locked ? "Unlock" : "Lock"}
-                            >
-                              {element.locked ? (
-                                <Lock className="w-4 h-4" />
-                              ) : (
-                                <Unlock className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === "assets" && (
-              <div className="space-y-4">
-                <h3 className="text-white font-medium mb-3">Assets</h3>
-
-                <div
-                  {...getRootProps()}
-                  className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                    isDragActive
-                      ? "border-blue-500 bg-blue-500 bg-opacity-10"
-                      : "border-gray-600 hover:border-gray-500"
-                  }`}
-                >
-                  <input {...getInputProps()} />
-                  <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm text-gray-400">
-                    {isDragActive
-                      ? "Drop files here"
-                      : "Drag & drop or click to upload"}
-                  </p>
-                  {uploading && (
-                    <p className="text-xs text-blue-400 mt-2">Uploading...</p>
-                  )}
-                </div>
-
-                {/* Assets List */}
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium text-gray-400 mb-2">
-                    Uploaded Assets ({assets.length})
-                  </h4>
-
-                  {loadingAssets ? (
-                    <div className="text-center py-4">
-                      <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            {/* Tab content */}
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+              <AnimatePresence mode="wait">
+                {activeTab === "layers" && (
+                  <motion.div
+                    key="layers"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-3"
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <Layers className="w-5 h-5 text-cyan-400" />
+                      <h3 className="text-white font-semibold">Layers</h3>
+                      <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
                     </div>
-                  ) : assets.length === 0 ? (
-                    <p className="text-gray-500 text-sm text-center py-4">
-                      No assets uploaded yet
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                      {assets.map((asset) => (
-                        <div
-                          key={asset._id}
-                          className="bg-gray-700 rounded-lg overflow-hidden shadow-sm border border-gray-600/40"
-                        >
-                          <div
-                            className="aspect-square bg-gray-800 flex items-center justify-center relative cursor-pointer group"
-                            onClick={() => {
-                              const newElement = {
-                                id: `image_${Date.now()}`,
-                                type: "image",
-                                x: 100,
-                                y: 100,
-                                width: asset.dimensions?.width || 200,
-                                height: asset.dimensions?.height || 200,
-                                src: asset.url,
-                                rotation: 0,
-                                opacity: 1,
-                                visible: true,
-                                locked: false,
-                                zIndex: elements.length,
-                                blendMode: "normal",
-                                effects: {},
-                              };
-                              addElement(newElement);
-                              toast.success("Image added to canvas");
-                            }}
-                            title={asset.name}
+                    
+                    {elements.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="relative inline-block mb-4">
+                          <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full blur-lg opacity-20" />
+                          <Layers className="relative w-12 h-12 text-gray-600" />
+                        </div>
+                        <p className="text-gray-500 text-sm">No elements yet</p>
+                        <p className="text-gray-600 text-xs mt-1">Start creating!</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {[...elements].reverse().map((element, index) => (
+                          <motion.div
+                            key={element.id}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.02 }}
+                            whileHover={{ x: 4 }}
+                            className={`group relative p-3 rounded-xl transition-all duration-300 ${
+                              selectedIds.includes(element.id)
+                                ? "bg-gradient-to-r from-cyan-600/30 to-purple-600/30 border border-cyan-500/50 shadow-lg shadow-cyan-500/20"
+                                : "bg-black/30 hover:bg-black/50 border border-white/10 hover:border-white/20"
+                            }`}
                           >
-                            {asset.thumbnail ? (
-                              <img
-                                src={asset.thumbnail}
-                                alt={asset.name}
-                                className="w-full h-full object-contain"
-                              />
-                            ) : (
-                              <ImageIcon className="w-8 h-8 text-gray-500" />
+                            {selectedIds.includes(element.id) && (
+                              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-xl blur" />
                             )}
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center pointer-events-none">
-                              <p className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity px-2 text-center">
-                                Click to add
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="border-t border-gray-600 bg-gray-800 px-2 py-1 flex items-center gap-2">
-                            {renamingAssetId === asset._id ? (
-                              <form
-                                className="flex items-center gap-2 w-full"
-                                onSubmit={(e) => {
-                                  e.preventDefault();
-                                  submitRename(asset._id);
-                                }}
+                            
+                            <div className="relative flex items-center justify-between gap-2">
+                              <div
+                                className="flex-1 cursor-pointer"
+                                onClick={() => selectElement(element.id)}
                               >
-                                <input
-                                  ref={renameInputRef}
-                                  value={renameValue}
-                                  onChange={(e) =>
-                                    setRenameValue(e.target.value)
-                                  }
-                                  onClick={(e) => e.stopPropagation()}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Escape") {
-                                      e.preventDefault();
-                                      cancelRenaming();
-                                    }
-                                  }}
-                                  className="flex-1 bg-gray-700 text-white text-xs px-2 py-1 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
-                                  disabled={renameLoading}
-                                  placeholder="Asset name"
-                                />
-                                <button
-                                  type="submit"
-                                  className="p-1 rounded bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50"
-                                  disabled={renameLoading}
-                                  title="Save name"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="p-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    cancelRenaming();
-                                  }}
-                                  disabled={renameLoading}
-                                  title="Cancel"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </form>
-                            ) : (
-                              <>
-                                <div className="flex-1 min-w-0">
-                                  <span
-                                    className="block text-xs text-gray-300 truncate"
-                                    title={asset.name}
-                                  >
-                                    {asset.name}
+                                <div className="flex items-center justify-between">
+                                  <span className={`text-sm truncate font-medium ${
+                                    selectedIds.includes(element.id) ? "text-white" : "text-gray-300"
+                                  }`}>
+                                    {element.name ||
+                                      (element.type === "text"
+                                        ? element.text || "Text"
+                                        : element.type.charAt(0).toUpperCase() +
+                                          element.type.slice(1))}
                                   </span>
-                                  <span className="text-[10px] text-gray-500">
-                                    {asset.dimensions?.width || 0} ×{" "}
-                                    {asset.dimensions?.height || 0} px
+                                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                    selectedIds.includes(element.id)
+                                      ? "bg-cyan-500/20 text-cyan-300"
+                                      : "bg-black/60 text-gray-400"
+                                  }`}>
+                                    {element.type}
                                   </span>
                                 </div>
-                                <button
-                                  type="button"
-                                  className="p-1 rounded hover:bg-gray-700 text-gray-300"
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    startRenaming(asset);
+                                    updateElement(element.id, {
+                                      visible: !element.visible,
+                                    });
                                   }}
-                                  title="Rename asset"
+                                  className="p-1.5 hover:bg-black/70 rounded-lg transition-colors"
+                                  title={element.visible ? "Hide" : "Show"}
                                 >
-                                  <Pencil className="w-4 h-4" />
-                                </button>
-                              </>
-                            )}
+                                  {element.visible ? (
+                                    <Eye className="w-4 h-4 text-cyan-400" />
+                                  ) : (
+                                    <EyeOff className="w-4 h-4 text-gray-500" />
+                                  )}
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateElement(element.id, {
+                                      locked: !element.locked,
+                                    });
+                                  }}
+                                  className="p-1.5 hover:bg-black/70 rounded-lg transition-colors"
+                                  title={element.locked ? "Unlock" : "Lock"}
+                                >
+                                  {element.locked ? (
+                                    <Lock className="w-4 h-4 text-purple-400" />
+                                  ) : (
+                                    <Unlock className="w-4 h-4 text-gray-500" />
+                                  )}
+                                </motion.button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
+                {activeTab === "assets" && (
+                  <motion.div
+                    key="assets"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <Upload className="w-5 h-5 text-purple-400" />
+                      <h3 className="text-white font-semibold">Assets</h3>
+                      <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+                    </div>
+
+                    <div
+                      {...getRootProps()}
+                      className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 overflow-hidden ${
+                        isDragActive
+                          ? "border-cyan-500 bg-cyan-500/10"
+                          : "border-white/20 hover:border-white/40 bg-black/30 hover:bg-black/50"
+                      }`}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-pink-500/5 opacity-0 hover:opacity-100 transition-opacity" />
+                      
+                      <input {...getInputProps()} />
+                      <motion.div
+                        animate={isDragActive ? { scale: 1.1 } : { scale: 1 }}
+                        className="relative"
+                      >
+                        <div className="relative inline-block mb-3">
+                          <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full blur-lg opacity-30" />
+                          <Upload className="relative w-10 h-10 text-cyan-400" />
+                        </div>
+                        <p className={`text-sm font-medium ${
+                          isDragActive ? "text-cyan-300" : "text-gray-300"
+                        }`}>
+                          {isDragActive
+                            ? "Drop files here..."
+                            : "Drag & drop or click"}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          PNG, JPG, SVG, GIF, WEBP
+                        </p>
+                      </motion.div>
+                      {uploading && (
+                        <div className="mt-3 flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
+                          <p className="text-xs text-cyan-400">Uploading...</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Assets List */}
+                    <div className="mt-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                          <Sparkles className="w-4 h-4" />
+                          Gallery
+                        </h4>
+                        <span className="text-xs text-gray-500 px-2 py-1 bg-black/60 rounded-full">
+                          {assets.length} {assets.length === 1 ? "asset" : "assets"}
+                        </span>
+                      </div>
+
+                      {loadingAssets ? (
+                        <div className="text-center py-12">
+                          <div className="relative inline-block">
+                            <div className="w-10 h-10 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+                            <div
+                              className="absolute inset-0 w-10 h-10 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"
+                              style={{
+                                animationDirection: "reverse",
+                                animationDuration: "1.5s",
+                              }}
+                            />
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+                      ) : assets.length === 0 ? (
+                        <div className="text-center py-12">
+                          <div className="relative inline-block mb-4">
+                            <div className="absolute -inset-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-lg opacity-20" />
+                            <ImageIcon className="relative w-12 h-12 text-gray-600" />
+                          </div>
+                          <p className="text-gray-500 text-sm">No assets yet</p>
+                          <p className="text-gray-600 text-xs mt-1">Upload your first image</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3">
+                          {assets.map((asset, index) => (
+                            <motion.div
+                              key={asset._id}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: index * 0.05 }}
+                              whileHover={{ scale: 1.05, y: -4 }}
+                              className="group relative bg-black/60 hover:bg-black/80 rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300 shadow-lg"
+                            >
+                              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-xl blur opacity-0 group-hover:opacity-30 transition-opacity" />
+                              
+                              <div
+                                className="relative aspect-square bg-gradient-to-br from-cyan-950/30 via-purple-950/30 to-pink-950/30 flex items-center justify-center cursor-pointer overflow-hidden"
+                                onClick={() => {
+                                  const newElement = {
+                                    id: `image_${Date.now()}`,
+                                    type: "image",
+                                    x: 100,
+                                    y: 100,
+                                    width: asset.dimensions?.width || 200,
+                                    height: asset.dimensions?.height || 200,
+                                    src: asset.url,
+                                    rotation: 0,
+                                    opacity: 1,
+                                    visible: true,
+                                    locked: false,
+                                    zIndex: elements.length,
+                                    blendMode: "normal",
+                                    effects: {},
+                                  };
+                                  addElement(newElement);
+                                  toast.success("Image added to canvas");
+                                }}
+                                title={asset.name}
+                              >
+                                {asset.thumbnail ? (
+                                  <img
+                                    src={asset.thumbnail}
+                                    alt={asset.name}
+                                    className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
+                                  />
+                                ) : (
+                                  <ImageIcon className="w-8 h-8 text-gray-500" />
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3">
+                                  <p className="text-white text-xs font-medium px-2 text-center">
+                                    Click to add
+                                  </p>
+                                </div>
+                              </div>
 
-          {/* Resize handle */}
-          {!isCollapsed && (
+                              <div className="relative border-t border-white/10 bg-black/30 px-2 py-2 flex items-center gap-2">
+                                {renamingAssetId === asset._id ? (
+                                  <form
+                                    className="flex items-center gap-1.5 w-full"
+                                    onSubmit={(e) => {
+                                      e.preventDefault();
+                                      submitRename(asset._id);
+                                    }}
+                                  >
+                                    <input
+                                      ref={renameInputRef}
+                                      value={renameValue}
+                                      onChange={(e) =>
+                                        setRenameValue(e.target.value)
+                                      }
+                                      onClick={(e) => e.stopPropagation()}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Escape") {
+                                          e.preventDefault();
+                                          cancelRenaming();
+                                        }
+                                      }}
+                                      className="flex-1 bg-black/50 text-white text-xs px-2 py-1 rounded-lg border border-white/20 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20"
+                                      disabled={renameLoading}
+                                      placeholder="Asset name"
+                                    />
+                                    <button
+                                      type="submit"
+                                      className="p-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white disabled:opacity-50 transition-colors"
+                                      disabled={renameLoading}
+                                      title="Save name"
+                                    >
+                                      <Check className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="p-1 rounded-lg bg-black/70 hover:bg-black/90 text-gray-300 transition-colors"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        cancelRenaming();
+                                      }}
+                                      disabled={renameLoading}
+                                      title="Cancel"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </form>
+                                ) : (
+                                  <>
+                                    <div className="flex-1 min-w-0">
+                                      <span
+                                        className="block text-xs text-gray-300 truncate font-medium"
+                                        title={asset.name}
+                                      >
+                                        {asset.name}
+                                      </span>
+                                      <span className="text-[10px] text-gray-500">
+                                        {asset.dimensions?.width || 0} ×{" "}
+                                        {asset.dimensions?.height || 0}
+                                      </span>
+                                    </div>
+                                    <motion.button
+                                      whileHover={{ scale: 1.1 }}
+                                      whileTap={{ scale: 0.9 }}
+                                      type="button"
+                                      className="p-1 rounded-lg hover:bg-black/70 text-gray-400 hover:text-white transition-colors"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        startRenaming(asset);
+                                      }}
+                                      title="Rename asset"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </motion.button>
+                                  </>
+                                )}
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Resize handle */}
             <div
-              className="absolute top-0 right-0 w-2 h-full cursor-col-resize hover:bg-blue-500 transition-colors z-20"
+              className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-gradient-to-b hover:from-cyan-500 hover:to-purple-500 transition-all z-20 group"
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setIsResizing(true);
               }}
               style={{
-                background: isResizing ? "#3b82f6" : "transparent",
+                background: isResizing
+                  ? "linear-gradient(to bottom, rgb(6, 182, 212), rgb(147, 51, 234))"
+                  : "transparent",
               }}
-            />
-          )}
-        </>
-      )}
-    </div>
+            >
+              <div className="absolute inset-0 w-3 -left-1" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 
