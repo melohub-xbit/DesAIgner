@@ -11,6 +11,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Editor from "./pages/Editor";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Home from "./pages/Home";
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/home" element={<Home />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>
