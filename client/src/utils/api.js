@@ -58,6 +58,7 @@ export const assetsAPI = {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   delete: (id) => api.delete(`/assets/${id}`),
+  update: (id, data) => api.patch(`/assets/${id}`, data),
 };
 
 export const aiAPI = {

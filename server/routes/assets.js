@@ -103,6 +103,42 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
+// Update asset metadata
+router.patch("/:id", auth, async (req, res) => {
+  try {
+    const asset = await Asset.findById(req.params.id);
+
+    if (!asset) {
+      return res.status(404).json({ error: "Asset not found" });
+    }
+
+    if (!asset.owner.equals(req.user._id)) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const { name, tags, projectId } = req.body;
+
+    if (typeof name === "string" && name.trim()) {
+      asset.name = name.trim().slice(0, 120);
+    }
+
+    if (Array.isArray(tags)) {
+      asset.tags = tags.map((tag) => String(tag).trim()).filter(Boolean);
+    }
+
+    if (projectId !== undefined) {
+      asset.project = projectId || null;
+    }
+
+    await asset.save();
+
+    res.json({ asset, message: "Asset updated successfully" });
+  } catch (error) {
+    console.error("Update asset error:", error);
+    res.status(500).json({ error: "Failed to update asset" });
+  }
+});
+
 // Delete asset
 router.delete("/:id", auth, async (req, res) => {
   try {

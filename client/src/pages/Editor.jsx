@@ -11,6 +11,8 @@ import PropertiesPanel from "../components/editor/PropertiesPanel";
 import PixiCanvas from "../components/editor/PixiCanvas";
 import CollaboratorCursors from "../components/editor/CollaboratorCursors";
 
+const GRID_MINOR = 25;
+
 const Editor = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
@@ -39,10 +41,18 @@ const Editor = () => {
       // Tool shortcuts
       if (e.key === 'v' || e.key === 'V') {
         setActiveTool('select');
+      } else if (e.key === 'h' || e.key === 'H') {
+        setActiveTool('pan');
       } else if (e.key === 'r' || e.key === 'R') {
         setActiveTool('rectangle');
       } else if (e.key === 'c' || e.key === 'C') {
         setActiveTool('circle');
+      } else if (e.key === 'y' || e.key === 'Y') {
+        setActiveTool('triangle');
+      } else if (e.key === 'l' || e.key === 'L') {
+        setActiveTool('line');
+      } else if (e.key === 'a' || e.key === 'A') {
+        setActiveTool('arrow');
       } else if (e.key === 't' || e.key === 'T') {
         setActiveTool('text');
       }
@@ -67,6 +77,38 @@ const Editor = () => {
         }
       }
       
+      // Arrow key nudging
+      if (
+        e.key === 'ArrowUp' ||
+        e.key === 'ArrowDown' ||
+        e.key === 'ArrowLeft' ||
+        e.key === 'ArrowRight'
+      ) {
+        const { selectedIds, elements, updateElement, canvasSettings } = useEditorStore.getState();
+        if (selectedIds.length > 0) {
+          e.preventDefault();
+          const baseStep = e.shiftKey ? 10 : 1;
+          const step = canvasSettings?.snapToGrid ? GRID_MINOR : baseStep;
+          const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+          const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+          selectedIds.forEach((id) => {
+            const element = elements.find((el) => el.id === id);
+            if (element && !element.locked) {
+              const targetX = element.x + dx;
+              const targetY = element.y + dy;
+              updateElement(id, {
+                x: canvasSettings?.snapToGrid
+                  ? Math.round(targetX / GRID_MINOR) * GRID_MINOR
+                  : targetX,
+                y: canvasSettings?.snapToGrid
+                  ? Math.round(targetY / GRID_MINOR) * GRID_MINOR
+                  : targetY,
+              });
+            }
+          });
+        }
+      }
+
       // Escape to deselect
       if (e.key === 'Escape') {
         useEditorStore.getState().clearSelection();
