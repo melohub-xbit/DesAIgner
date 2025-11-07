@@ -1,206 +1,136 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Plus, LogOut, Palette, Folder, Clock, Users } from "lucide-react";
 import toast from "react-hot-toast";
-import { useAuthStore } from "../store/authStore";
 import { projectsAPI } from "../utils/api";
+import ShareModal from "../components/modals/ShareModals";
+import JoinProjectModal from "../components/modals/JoinProjectModal";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
-  const { user, logout } = useAuthStore();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    loadProjects();
-  }, []);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showJoinModal, setShowJoinModal] = useState(false);
 
   const loadProjects = async () => {
     try {
       const { data } = await projectsAPI.getAll();
-      setProjects(data.projects);
-    } catch (error) {
+      setProjects(data.projects || []);
+    } catch {
       toast.error("Failed to load projects");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateProject = async (e) => {
-    e.preventDefault();
-    if (!newProjectName.trim()) return;
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const handleCreate = async () => {
+    const name = prompt("Enter project name:");
+    if (!name) return;
 
     try {
-      const { data } = await projectsAPI.create({
-        name: newProjectName,
-        description: "",
-      });
-      toast.success("Project created!");
-      setShowCreateModal(false);
-      setNewProjectName("");
+      const { data } = await projectsAPI.create({ name });
+      toast.success("Project created");
       navigate(`/editor/${data.project._id}`);
-    } catch (error) {
+    } catch {
       toast.error("Failed to create project");
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this project?")) return;
+    try {
+      await projectsAPI.delete(id);
+      toast.success("Project deleted");
+      loadProjects();
+    } catch {
+      toast.error("Failed to delete project");
+    }
   };
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen text-gray-400">
+        Loading projects...
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Palette className="w-8 h-8 text-blue-400 mr-3" />
-              <h1 className="text-2xl font-bold text-white">DesAIgner</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-300">Welcome, {user?.username}</span>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gray-900 text-white p-8">
+      <div className="flex justify-between items-center mb-6">
+  <h1 className="text-2xl font-semibold">Your Projects</h1>
+  <div className="flex gap-2">
+    <button
+      onClick={() => setShowJoinModal(true)}
+      className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm"
+    >
+      Join via Code
+    </button>
+    <button
+      onClick={handleCreate}
+      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm"
+    >
+      + New Project
+    </button>
+  </div>
+</div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold text-white">Your Projects</h2>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            New Project
-          </button>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          </div>
-        ) : projects.length === 0 ? (
-          <div className="text-center py-12">
-            <Folder className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-400 mb-2">
-              No projects yet
-            </h3>
-            <p className="text-gray-500 mb-6">
-              Create your first project to get started
-            </p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+      {projects.length === 0 ? (
+        <p className="text-gray-400">No projects yet. Create one to start!</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {projects.map((p) => (
+            <div
+              key={p._id}
+              className="bg-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-colors border border-gray-700 relative"
             >
-              <Plus className="w-5 h-5" />
-              Create Project
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <motion.div
-                key={project._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -4 }}
-                onClick={() => navigate(`/editor/${project._id}`)}
-                className="bg-gray-800 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
-              >
-                <div className="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  {project.thumbnail ? (
-                    <img
-                      src={project.thumbnail}
-                      alt={project.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Palette className="w-16 h-16 text-white opacity-50" />
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    {project.name}
-                  </h3>
-                  <div className="flex items-center gap-4 text-sm text-gray-400">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {formatDate(project.updatedAt)}
-                    </div>
-                    {project.collaborators?.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        {project.collaborators.length}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </main>
+              <h2 className="text-lg font-medium truncate mb-2">{p.name}</h2>
+              <p className="text-sm text-gray-400 truncate mb-4">
+                {p.description || "No description"}
+              </p>
 
-      {/* Create Project Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-gray-800 rounded-lg p-6 w-full max-w-md"
-          >
-            <h3 className="text-xl font-bold text-white mb-4">
-              Create New Project
-            </h3>
-            <form onSubmit={handleCreateProject}>
-              <input
-                type="text"
-                value={newProjectName}
-                onChange={(e) => setNewProjectName(e.target.value)}
-                placeholder="Project name"
-                autoFocus
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-              />
-              <div className="flex gap-3">
+              <div className="flex justify-between items-center">
                 <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                  onClick={() => navigate(`/editor/${p._id}`)}
+                  className="bg-blue-600 hover:bg-blue-700 text-sm px-3 py-1 rounded"
                 >
-                  Cancel
+                  Open
                 </button>
+
                 <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  onClick={() => setSelectedProject(p._id)}
+                  className="text-gray-300 hover:text-blue-400 text-sm"
                 >
-                  Create
+                  Invite
+                </button>
+
+                <button
+                  onClick={() => handleDelete(p._id)}
+                  className="text-gray-400 hover:text-red-500 text-sm"
+                >
+                  Delete
                 </button>
               </div>
-            </form>
-          </motion.div>
+            </div>
+          ))}
         </div>
+      )}
+
+      {selectedProject && (
+        <ShareModal
+          projectId={selectedProject}
+          onClose={() => setSelectedProject(null)}
+        />
+      )}
+      {showJoinModal && (
+        <JoinProjectModal
+          onClose={() => setShowJoinModal(false)}
+          onJoined={loadProjects}
+        />
       )}
     </div>
   );

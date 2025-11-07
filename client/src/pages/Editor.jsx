@@ -1,204 +1,88 @@
-import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { useAuthStore } from "../store/authStore";
-import { useEditorStore } from "../store/editorStore";
 import { projectsAPI } from "../utils/api";
 import socketService from "../utils/socket";
+import { useAuthStore } from "../store/authStore";
+import { useEditorStore } from "../store/editorStore";
 import Toolbar from "../components/editor/Toolbar";
 import Sidebar from "../components/editor/Sidebar";
 import PropertiesPanel from "../components/editor/PropertiesPanel";
 import PixiCanvas from "../components/editor/PixiCanvas";
 import CollaboratorCursors from "../components/editor/CollaboratorCursors";
+import ShareModal from "../components/modals/ShareModals";
 
 const Editor = () => {
-  const { projectId } = useParams();
-  const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const {
-    elements,
-    setElements,
-    setCanvasSettings,
-    setActiveUsers,
-    updateUserCursor,
-    removeUserCursor,
-  } = useEditorStore();
-
+  const { id: projectId } = useParams();
+  const token = useAuthStore((s) => s.token);
   const [project, setProject] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const saveTimeoutRef = useRef(null);
+  const [showShare, setShowShare] = useState(false);
+  const { setElements, setProjectId } = useEditorStore();
 
-  useEffect(() => {
-    loadProject();
-    setupSocketListeners();
-
-    // Keyboard shortcuts
-    const handleKeyDown = (e) => {
-      const { setActiveTool, undo, redo, deleteSelected } = useEditorStore.getState();
-      
-      // Tool shortcuts
-      if (e.key === 'v' || e.key === 'V') {
-        setActiveTool('select');
-      } else if (e.key === 'r' || e.key === 'R') {
-        setActiveTool('rectangle');
-      } else if (e.key === 'c' || e.key === 'C') {
-        setActiveTool('circle');
-      } else if (e.key === 't' || e.key === 'T') {
-        setActiveTool('text');
-      }
-      
-      // Undo/Redo
-      if (e.ctrlKey || e.metaKey) {
-        if (e.shiftKey && e.key === 'z') {
-          e.preventDefault();
-          redo();
-        } else if (e.key === 'z') {
-          e.preventDefault();
-          undo();
-        }
-      }
-      
-      // Delete
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        const { selectedIds } = useEditorStore.getState();
-        if (selectedIds.length > 0) {
-          e.preventDefault();
-          deleteSelected();
-        }
-      }
-      
-      // Escape to deselect
-      if (e.key === 'Escape') {
-        useEditorStore.getState().clearSelection();
-        setActiveTool('select');
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      socketService.leaveProject(projectId);
-      socketService.disconnect();
-    };
-  }, [projectId]);
-
-  useEffect(() => {
-    // Auto-save on element changes
-    if (project && elements.length >= 0) {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      saveTimeoutRef.current = setTimeout(() => {
-        saveProject();
-      }, 2000); // Save after 2 seconds of inactivity
-    }
-  }, [elements]);
-
-  const loadProject = async () => {
+  // Load project
+  const loadProject = useCallback(async () => {
     try {
       const { data } = await projectsAPI.getOne(projectId);
       setProject(data.project);
       setElements(data.project.elements || []);
-      setCanvasSettings(data.project.canvasSettings || {});
-
-      // Connect to socket
-      socketService.connect();
-      socketService.joinProject(projectId, user);
-
-      setLoading(false);
-    } catch (error) {
+      setProjectId(projectId);
+      toast.success(`Loaded "${data.project.name}"`);
+    } catch {
       toast.error("Failed to load project");
-      navigate("/dashboard");
     }
-  };
+  }, [projectId, setElements, setProjectId]);
 
-  const setupSocketListeners = () => {
+  useEffect(() => {
+    loadProject();
+  }, [loadProject]);
+
+  // Socket connection
+  useEffect(() => {
     const socket = socketService.connect();
+    socketService.joinProject(projectId, token);
 
-    socket.on("active-users", (users) => {
-      setActiveUsers(users);
+    socket.on("error", (err) => {
+      toast.error(err.error || "Socket error");
     });
 
-    socket.on("user-joined", ({ socketId, user }) => {
-      toast.success(`${user.username} joined`);
-    });
+    return () => {
+      socketService.leaveProject(projectId);
+      socketService.disconnect();
+    };
+  }, [projectId, token]);
 
-    socket.on("user-left", ({ socketId, user }) => {
-      removeUserCursor(socketId);
-      if (user) {
-        toast(`${user.username} left`, { icon: "👋" });
-      }
-    });
-
-    socket.on("element-added", ({ element }) => {
-      useEditorStore.getState().addElement(element);
-    });
-
-    socket.on("element-updated", ({ element }) => {
-      useEditorStore.getState().updateElement(element.id, element);
-    });
-
-    socket.on("element-deleted", ({ elementId }) => {
-      useEditorStore.getState().deleteElement(elementId);
-    });
-
-    socket.on("elements-updated", ({ elements }) => {
-      setElements(elements);
-    });
-
-    socket.on("cursor-moved", ({ socketId, user, position }) => {
-      updateUserCursor(socketId, user, position);
-    });
-
-    socket.on("canvas-updated", ({ settings }) => {
-      setCanvasSettings(settings);
-    });
-  };
-
-  const saveProject = async () => {
-    try {
-      await projectsAPI.update(projectId, {
-        elements,
-      });
-    } catch (error) {
-      console.error("Auto-save failed:", error);
-    }
-  };
-
-  if (loading) {
+  if (!project) {
     return (
-      <div className="h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-          <p className="text-gray-400">Loading project...</p>
-        </div>
+      <div className="flex items-center justify-center h-screen text-gray-400">
+        Loading project...
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-gray-900 flex flex-col overflow-hidden">
+    <div className="flex flex-col h-screen bg-gray-900">
       <Toolbar project={project} projectId={projectId} />
 
-      <div className="flex-1 relative overflow-hidden">
-        {/* Canvas - Full width background */}
-        <div className="absolute inset-0">
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar projectId={projectId} />
+
+        <div className="relative flex-1 overflow-hidden">
           <PixiCanvas projectId={projectId} />
           <CollaboratorCursors />
+          <button
+            onClick={() => setShowShare(true)}
+            className="absolute top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-2 rounded-lg shadow"
+          >
+            Invite Collaborator
+          </button>
         </div>
 
-        {/* Left Sidebar - Overlays canvas */}
-        <div className="absolute left-0 top-0 bottom-0 z-10">
-          <Sidebar projectId={projectId} />
-        </div>
-
-        {/* Right Properties Panel - Overlays canvas */}
-        <div className="absolute right-0 top-0 bottom-0 z-10">
-          <PropertiesPanel />
-        </div>
+        <PropertiesPanel />
       </div>
+
+      {showShare && (
+        <ShareModal projectId={projectId} onClose={() => setShowShare(false)} />
+      )}
     </div>
   );
 };

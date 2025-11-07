@@ -1,18 +1,40 @@
+// handlers.js
+const jwt = require("jsonwebtoken");
 const Project = require("../models/Project");
+const User = require("../models/User");
 
-// Active users per project room
+// Track active users per project room
 const activeUsers = new Map();
 
 const setupSocketHandlers = (io) => {
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
-    // Join project room
-    socket.on("join-project", async ({ projectId, user }) => {
+    // Securely join a project room
+    socket.on("join-project", async ({ projectId, token }) => {
       try {
+        if (!token) return socket.emit("error", { error: "Missing token" });
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId);
+        if (!user) return socket.emit("error", { error: "User not found" });
+
+        const project = await Project.findById(projectId);
+        if (!project)
+          return socket.emit("error", { error: "Project not found" });
+
+        const allowed =
+          project.owner.equals(user._id) ||
+          project.collaborators.some((c) => c.user.equals(user._id)) ||
+          project.isPublic;
+
+        if (!allowed)
+          return socket.emit("error", { error: "Access denied" });
+
+        // Join room
         socket.join(projectId);
 
-        // Add user to active users
+        // Add user to active users list
         if (!activeUsers.has(projectId)) {
           activeUsers.set(projectId, new Map());
         }
@@ -23,7 +45,7 @@ const setupSocketHandlers = (io) => {
           cursor: { x: 0, y: 0 },
         });
 
-        // Broadcast to room
+        // Notify others
         socket.to(projectId).emit("user-joined", {
           socketId: socket.id,
           user: {
@@ -33,16 +55,17 @@ const setupSocketHandlers = (io) => {
           },
         });
 
-        // Send current active users to new user
+        // Send current active users list to new joiner
         const users = Array.from(activeUsers.get(projectId).values());
         socket.emit(
           "active-users",
-          users.filter((u) => u.id !== user._id)
+          users.filter((u) => u.id.toString() !== user._id.toString())
         );
 
-        console.log(`User ${user.username} joined project ${projectId}`);
-      } catch (error) {
-        console.error("Join project error:", error);
+        console.log(`✅ ${user.username} joined project ${projectId}`);
+      } catch (err) {
+        console.error("Join-project error:", err);
+        socket.emit("error", { error: "Invalid or expired token" });
       }
     });
 
@@ -54,9 +77,10 @@ const setupSocketHandlers = (io) => {
     // Element operations
     socket.on("element-add", async ({ projectId, element }) => {
       try {
-        socket
-          .to(projectId)
-          .emit("element-added", { element, userId: socket.id });
+        socket.to(projectId).emit("element-added", {
+          element,
+          userId: socket.id,
+        });
       } catch (error) {
         console.error("Element add error:", error);
       }
@@ -64,9 +88,10 @@ const setupSocketHandlers = (io) => {
 
     socket.on("element-update", async ({ projectId, element }) => {
       try {
-        socket
-          .to(projectId)
-          .emit("element-updated", { element, userId: socket.id });
+        socket.to(projectId).emit("element-updated", {
+          element,
+          userId: socket.id,
+        });
       } catch (error) {
         console.error("Element update error:", error);
       }
@@ -74,26 +99,28 @@ const setupSocketHandlers = (io) => {
 
     socket.on("element-delete", async ({ projectId, elementId }) => {
       try {
-        socket
-          .to(projectId)
-          .emit("element-deleted", { elementId, userId: socket.id });
+        socket.to(projectId).emit("element-deleted", {
+          elementId,
+          userId: socket.id,
+        });
       } catch (error) {
         console.error("Element delete error:", error);
       }
     });
 
-    // Bulk operations
+    // Bulk update
     socket.on("elements-update", async ({ projectId, elements }) => {
       try {
-        socket
-          .to(projectId)
-          .emit("elements-updated", { elements, userId: socket.id });
+        socket.to(projectId).emit("elements-updated", {
+          elements,
+          userId: socket.id,
+        });
       } catch (error) {
         console.error("Elements update error:", error);
       }
     });
 
-    // Cursor position
+    // Cursor movement
     socket.on("cursor-move", ({ projectId, position }) => {
       try {
         if (
@@ -104,7 +131,7 @@ const setupSocketHandlers = (io) => {
           user.cursor = position;
           socket.to(projectId).emit("cursor-moved", {
             socketId: socket.id,
-            user: user,
+            user,
             position,
           });
         }
@@ -113,7 +140,7 @@ const setupSocketHandlers = (io) => {
       }
     });
 
-    // Selection sync
+    // Selection synchronization
     socket.on("selection-change", ({ projectId, selectedIds }) => {
       try {
         socket.to(projectId).emit("user-selection-changed", {
@@ -125,22 +152,21 @@ const setupSocketHandlers = (io) => {
       }
     });
 
-    // Canvas settings update
+    // Canvas settings updates
     socket.on("canvas-update", ({ projectId, settings }) => {
       try {
-        socket
-          .to(projectId)
-          .emit("canvas-updated", { settings, userId: socket.id });
+        socket.to(projectId).emit("canvas-updated", {
+          settings,
+          userId: socket.id,
+        });
       } catch (error) {
         console.error("Canvas update error:", error);
       }
     });
 
-    // Disconnect
+    // Handle disconnects
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);
-
-      // Remove from all project rooms
       activeUsers.forEach((users, projectId) => {
         if (users.has(socket.id)) {
           handleUserLeave(socket, projectId);
@@ -150,6 +176,7 @@ const setupSocketHandlers = (io) => {
   });
 };
 
+// Utility to remove user cleanly
 const handleUserLeave = (socket, projectId) => {
   if (activeUsers.has(projectId)) {
     const user = activeUsers.get(projectId).get(socket.id);
@@ -161,7 +188,6 @@ const handleUserLeave = (socket, projectId) => {
 
     socket.to(projectId).emit("user-left", { socketId: socket.id, user });
     socket.leave(projectId);
-
     console.log(`User left project ${projectId}`);
   }
 };
