@@ -34,11 +34,6 @@ api.interceptors.response.use(
 
 export default api;
 
-export const invitesAPI = {
-  generateCode: (projectId) => api.post(`/projects/${projectId}/invite-code`),
-  joinWithCode: (code) => api.post(`/projects/join-with-code`, { code }),
-};
-
 // API methods
 export const authAPI = {
   register: (data) => api.post("/auth/register", data),

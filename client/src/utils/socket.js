@@ -36,9 +36,9 @@ class SocketService {
     }
   }
 
-  joinProject(projectId, token) {
+  joinProject(projectId, user) {
     if (this.socket) {
-      this.socket.emit("join-project", { projectId, token });
+      this.socket.emit("join-project", { projectId, user });
     }
   }
 
