@@ -189,9 +189,13 @@ const Editor = () => {
     );
   }
 
+  const handleProjectUpdate = (updatedProject) => {
+    setProject(updatedProject);
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-gray-900">
-      <Toolbar project={project} projectId={projectId} />
+    <div className="h-screen bg-gray-900 flex flex-col overflow-hidden">
+      <Toolbar project={project} projectId={projectId} onProjectUpdate={handleProjectUpdate} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar projectId={projectId} />
@@ -207,7 +211,15 @@ const Editor = () => {
           </button>
         </div>
 
-        <PropertiesPanel />
+        {/* Left Sidebar - Overlays canvas */}
+        <div className="absolute left-0 top-0 bottom-0 z-10">
+          <Sidebar projectId={projectId} />
+        </div>
+
+        {/* Right Properties Panel - Overlays canvas */}
+        <div className="absolute right-0 top-0 bottom-0 z-10">
+          <PropertiesPanel projectId={projectId} />
+        </div>
       </div>
 
       {showShare && (

@@ -16,6 +16,7 @@ export const useEditorStore = create((set, get) => ({
   activeTool: "select",
   zoom: 1,
   pan: { x: 0, y: 0 },
+  isFilled: true,
 
   // History
   history: [],
@@ -81,6 +82,8 @@ export const useEditorStore = create((set, get) => ({
 
   setActiveTool: (tool) => set({ activeTool: tool }),
 
+  setIsFilled: (filled) => set({ isFilled: filled }),
+
   setZoom: (zoom) => set({ zoom: Math.max(0.1, Math.min(5, zoom)) }),
 
   setPan: (pan) => set({ pan }),
@@ -136,5 +139,24 @@ export const useEditorStore = create((set, get) => ({
     const newCursors = new Map(userCursors);
     newCursors.delete(socketId);
     set({ userCursors: newCursors });
+  },
+
+  // Z-index management
+  bringToFront: (id) => {
+    const { elements } = get();
+    const maxZIndex = Math.max(...elements.map((el) => el.zIndex || 0), -1);
+    const element = elements.find((el) => el.id === id);
+    if (element) {
+      get().updateElement(id, { zIndex: maxZIndex + 1 });
+    }
+  },
+
+  sendToBack: (id) => {
+    const { elements } = get();
+    const minZIndex = Math.min(...elements.map((el) => el.zIndex || 0), 0);
+    const element = elements.find((el) => el.id === id);
+    if (element) {
+      get().updateElement(id, { zIndex: minZIndex - 1 });
+    }
   },
 }));
