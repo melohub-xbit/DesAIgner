@@ -81,6 +81,9 @@ const Editor = () => {
       } else if (e.key === "t" || e.key === "T") {
         e.preventDefault();
         setActiveTool("text");
+      } else if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        setActiveTool("stickynote");
       }
 
       // Undo/Redo (Ctrl+Alt+Z / Ctrl+Alt+Shift+Z)

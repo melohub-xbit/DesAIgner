@@ -28,6 +28,7 @@ import {
   FileDown,
   Image,
   ChevronDown,
+  FileText,
 } from "lucide-react";
 import { useEditorStore } from "../../store/editorStore";
 import { projectsAPI } from "../../utils/api";
@@ -85,6 +86,7 @@ const Toolbar = ({ project, projectId, onProjectUpdate, onAIRequest, onExportIma
     { id: "arrow", icon: ArrowUpRight, label: "Arrow (Ctrl+Alt+A)" },
     { id: "freehand", icon: Pen, label: "Freehand (P)" },
     { id: "text", icon: Type, label: "Text (Ctrl+Alt+T)" },
+    { id: "stickynote", icon: FileText, label: "Sticky Note (Ctrl+Alt+N)" },
   ];
 
   const handleExportImage = () => {

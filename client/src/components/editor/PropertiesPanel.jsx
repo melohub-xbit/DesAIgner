@@ -779,6 +779,61 @@ const PropertiesPanel = ({ projectId }) => {
                 </>
               )}
 
+              {/* Sticky Note properties */}
+              {selectedElement.type === "stickynote" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Text
+                    </label>
+                    <textarea
+                      value={selectedElement.text || ""}
+                      onChange={(e) => handleUpdate({ text: e.target.value })}
+                      className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+                      rows={4}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Font Size
+                    </label>
+                    <input
+                      type="number"
+                      value={selectedElement.fontSize || 16}
+                      onChange={(e) =>
+                        handleUpdate({ fontSize: Number(e.target.value) })
+                      }
+                      className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Background Color
+                    </label>
+                    <input
+                      type="color"
+                      value={selectedElement.fill || "#fef08a"}
+                      onChange={(e) => handleUpdate({ fill: e.target.value })}
+                      className="w-full h-10 bg-gray-700 border border-gray-600 rounded cursor-pointer"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Text Color
+                    </label>
+                    <input
+                      type="color"
+                      value={selectedElement.textColor || "#000000"}
+                      onChange={(e) => handleUpdate({ textColor: e.target.value })}
+                      className="w-full h-10 bg-gray-700 border border-gray-600 rounded cursor-pointer"
+                    />
+                  </div>
+                </>
+              )}
+
               {/* Z-Index Controls */}
               <div className="pt-4 border-t border-gray-700">
                 <label className="block text-sm font-medium text-gray-300 mb-2">

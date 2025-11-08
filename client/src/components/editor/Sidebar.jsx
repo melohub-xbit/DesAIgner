@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { useEditorStore } from "../../store/editorStore";
 import { useDropzone } from "react-dropzone";
@@ -24,7 +25,7 @@ import AssistantPanel from "./AssistantPanel";
 
 const Sidebar = ({ projectId }) => {
   const [activeTab, setActiveTab] = useState("layers");
-  const { elements, selectElement, selectedIds, updateElement, addElement } =
+  const { elements, selectElement, selectedIds, updateElement, addElement, deleteElement } =
     useEditorStore();
   const [uploading, setUploading] = useState(false);
   const [assets, setAssets] = useState([]);
@@ -268,11 +269,12 @@ const Sidebar = ({ projectId }) => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`relative flex-1 flex items-center justify-center gap-2 py-3.5 transition-all duration-300 ${
+                    className={`relative flex-1 flex items-center justify-center gap-2 py-3.5 transition-all duration-300 min-w-0 ${
                       isActive
                         ? "text-white"
                         : "text-gray-400 hover:text-white hover:bg-black/50"
                     }`}
+                    title={width <= 180 ? tab.label : undefined}
                   >
                     {isActive && (
                       <motion.div
@@ -285,17 +287,24 @@ const Sidebar = ({ projectId }) => {
                         }}
                       />
                     )}
-                    <Icon className="w-4 h-4 relative z-10" />
-                    <span className="text-sm font-medium relative z-10">
-                      {tab.label}
-                    </span>
+                    <Icon className="w-4 h-4 relative z-10 flex-shrink-0" />
+                    {width > 180 && (
+                      <span className="text-sm font-medium relative z-10 truncate">
+                        {tab.label}
+                      </span>
+                    )}
                   </motion.button>
                 );
               })}
             </div>
 
             {/* Tab content */}
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            <div 
+              className="flex-1 overflow-y-auto custom-scrollbar"
+              style={{
+                padding: width > 220 ? "16px" : width > 180 ? "12px" : "8px",
+              }}
+            >
               <AnimatePresence mode="wait">
                 {activeTab === "assistant" && (
                   <motion.div
@@ -319,9 +328,13 @@ const Sidebar = ({ projectId }) => {
                     className="space-y-3"
                   >
                     <div className="flex items-center gap-2 mb-4">
-                      <Layers className="w-5 h-5 text-cyan-400" />
-                      <h3 className="text-white font-semibold">Layers</h3>
-                      <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+                      <Layers className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                      {width > 180 && (
+                        <>
+                          <h3 className="text-white font-semibold">Layers</h3>
+                          <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+                        </>
+                      )}
                     </div>
 
                     {elements.length === 0 ? (
@@ -344,24 +357,32 @@ const Sidebar = ({ projectId }) => {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.02 }}
                             whileHover={{ x: 4 }}
-                            className={`group relative p-3 rounded-xl transition-all duration-300 ${
+                            className={`group relative rounded-xl transition-all duration-300 ${
                               selectedIds.includes(element.id)
                                 ? "bg-gradient-to-r from-cyan-600/30 to-purple-600/30 border border-cyan-500/50 shadow-lg shadow-cyan-500/20"
                                 : "bg-black/30 hover:bg-black/50 border border-white/10 hover:border-white/20"
                             }`}
+                            style={{
+                              padding: width > 220 ? "12px" : "8px",
+                            }}
                           >
                             {selectedIds.includes(element.id) && (
                               <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-xl blur" />
                             )}
 
-                            <div className="relative flex items-center justify-between gap-2">
+                            <div className="relative flex items-center gap-2 min-w-0">
                               <div
-                                className="flex-1 cursor-pointer"
+                                className="flex-1 min-w-0 cursor-pointer"
                                 onClick={() => selectElement(element.id)}
+                                title={element.name ||
+                                  (element.type === "text"
+                                    ? element.text || "Text"
+                                    : element.type.charAt(0).toUpperCase() +
+                                      element.type.slice(1))}
                               >
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 min-w-0">
                                   <span
-                                    className={`text-sm truncate font-medium ${
+                                    className={`text-sm truncate font-medium min-w-0 ${
                                       selectedIds.includes(element.id)
                                         ? "text-white"
                                         : "text-gray-300"
@@ -373,18 +394,20 @@ const Sidebar = ({ projectId }) => {
                                         : element.type.charAt(0).toUpperCase() +
                                           element.type.slice(1))}
                                   </span>
-                                  <span
-                                    className={`text-xs px-2 py-0.5 rounded-full ${
-                                      selectedIds.includes(element.id)
-                                        ? "bg-cyan-500/20 text-cyan-300"
-                                        : "bg-black/60 text-gray-400"
-                                    }`}
-                                  >
-                                    {element.type}
-                                  </span>
+                                  {width > 220 && (
+                                    <span
+                                      className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+                                        selectedIds.includes(element.id)
+                                          ? "bg-cyan-500/20 text-cyan-300"
+                                          : "bg-black/60 text-gray-400"
+                                      }`}
+                                    >
+                                      {element.type}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-0.5 flex-shrink-0">
                                 <motion.button
                                   whileHover={{ scale: 1.1 }}
                                   whileTap={{ scale: 0.9 }}
@@ -403,23 +426,37 @@ const Sidebar = ({ projectId }) => {
                                     <EyeOff className="w-4 h-4 text-gray-500" />
                                   )}
                                 </motion.button>
+                                {width > 200 && (
+                                  <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateElement(element.id, {
+                                        locked: !element.locked,
+                                      });
+                                    }}
+                                    className="p-1.5 hover:bg-black/70 rounded-lg transition-colors"
+                                    title={element.locked ? "Unlock" : "Lock"}
+                                  >
+                                    {element.locked ? (
+                                      <Lock className="w-4 h-4 text-purple-400" />
+                                    ) : (
+                                      <Unlock className="w-4 h-4 text-gray-500" />
+                                    )}
+                                  </motion.button>
+                                )}
                                 <motion.button
                                   whileHover={{ scale: 1.1 }}
                                   whileTap={{ scale: 0.9 }}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    updateElement(element.id, {
-                                      locked: !element.locked,
-                                    });
+                                    deleteElement(element.id);
                                   }}
-                                  className="p-1.5 hover:bg-black/70 rounded-lg transition-colors"
-                                  title={element.locked ? "Unlock" : "Lock"}
+                                  className="p-1.5 hover:bg-red-500/20 rounded-lg transition-colors"
+                                  title="Delete"
                                 >
-                                  {element.locked ? (
-                                    <Lock className="w-4 h-4 text-purple-400" />
-                                  ) : (
-                                    <Unlock className="w-4 h-4 text-gray-500" />
-                                  )}
+                                  <Trash2 className="w-4 h-4 text-red-400 hover:text-red-300" />
                                 </motion.button>
                               </div>
                             </div>
@@ -440,9 +477,13 @@ const Sidebar = ({ projectId }) => {
                     className="space-y-4"
                   >
                     <div className="flex items-center gap-2 mb-4">
-                      <Upload className="w-5 h-5 text-purple-400" />
-                      <h3 className="text-white font-semibold">Assets</h3>
-                      <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+                      <Upload className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                      {width > 180 && (
+                        <>
+                          <h3 className="text-white font-semibold">Assets</h3>
+                          <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+                        </>
+                      )}
                     </div>
 
                     <div
@@ -489,13 +530,15 @@ const Sidebar = ({ projectId }) => {
                     <div className="mt-6">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                          <Sparkles className="w-4 h-4" />
-                          Gallery
+                          <Sparkles className="w-4 h-4 flex-shrink-0" />
+                          {width > 200 && <span>Gallery</span>}
                         </h4>
-                        <span className="text-xs text-gray-500 px-2 py-1 bg-black/60 rounded-full">
-                          {assets.length}{" "}
-                          {assets.length === 1 ? "asset" : "assets"}
-                        </span>
+                        {width > 220 && (
+                          <span className="text-xs text-gray-500 px-2 py-1 bg-black/60 rounded-full">
+                            {assets.length}{" "}
+                            {assets.length === 1 ? "asset" : "assets"}
+                          </span>
+                        )}
                       </div>
 
                       {loadingAssets ? (
@@ -523,7 +566,12 @@ const Sidebar = ({ projectId }) => {
                           </p>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div 
+                          className="grid gap-3"
+                          style={{
+                            gridTemplateColumns: width > 280 ? "repeat(2, 1fr)" : "1fr",
+                          }}
+                        >
                           {assets.map((asset, index) => (
                             <motion.div
                               key={asset._id}

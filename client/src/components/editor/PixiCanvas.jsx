@@ -43,6 +43,8 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
   const activeToolRef = useRef("select");
   const drawingStateRef = useRef(null);
   const freeDrawPathRef = useRef(null);
+  const editingStickyNoteRef = useRef(null); // Track which sticky note is being edited
+  const textareaRef = useRef(null); // Reference to the editing textarea
   const handleConfigs = [
     { id: "nw", cursor: "nwse-resize", x: 0, y: 0 },
     { id: "n", cursor: "ns-resize", x: 0.5, y: 0 },
@@ -90,6 +92,11 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
       });
       textureCacheRef.current.clear();
       textureLoadingRef.current.clear();
+      // Cleanup textarea if exists
+      if (textareaRef.current) {
+        textareaRef.current.remove();
+        textareaRef.current = null;
+      }
       if (appRef.current) {
         appRef.current.destroy(true, { children: true });
       }
@@ -303,6 +310,22 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
     graphics.lineTo(element.width, element.height);
   };
 
+  const drawStickyNoteShape = (graphics, element) => {
+    graphics.clear();
+    // Yellow sticky note background
+    const bgColor = parseColor(element.fill || "#fef08a", 0xfef08a);
+    graphics.beginFill(bgColor);
+    // Light shadow effect
+    graphics.lineStyle(1, parseColor("#d4a574", 0xd4a574), 0.3);
+    graphics.drawRoundedRect(0, 0, element.width, element.height, 4);
+    graphics.endFill();
+    
+    // Optional: Add a subtle shadow line at the bottom
+    graphics.lineStyle(2, parseColor("#d4a574", 0xd4a574), 0.2);
+    graphics.moveTo(0, element.height - 2);
+    graphics.lineTo(element.width, element.height - 2);
+  };
+
   const redrawElementGraphics = (displayObject, element) => {
     switch (element.type) {
       case "rectangle":
@@ -322,6 +345,9 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
         break;
       case "freehand":
         drawFreehandShape(displayObject, element);
+        break;
+      case "stickynote":
+        drawStickyNoteShape(displayObject, element);
         break;
       default:
         break;
@@ -487,6 +513,10 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
       };
     } else if (currentTool === "text") {
       createText(worldPos.x, worldPos.y);
+    } else if (currentTool === "stickynote") {
+      createStickyNote(worldPos.x, worldPos.y);
+      // Auto-switch to select tool after creating sticky note
+      setActiveTool("select");
     }
   };
 
@@ -1286,6 +1316,161 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
     socketService.emitElementAdd(projectId, element);
   };
 
+  const createStickyNote = (x, y) => {
+    const element = {
+      id: `stickynote_${Date.now()}`,
+      type: "stickynote",
+      x: snapValue(x),
+      y: snapValue(y),
+      width: 200,
+      height: 200,
+      text: "Click to edit",
+      fontSize: 16,
+      fontFamily: "Arial",
+      fill: "#fef08a", // Yellow sticky note color
+      textColor: "#000000",
+      rotation: 0,
+      opacity: 1,
+      visible: true,
+      locked: false,
+      zIndex: elements.length,
+      blendMode: "normal",
+      effects: {},
+    };
+
+    addElement(element);
+    socketService.emitElementAdd(projectId, element);
+  };
+
+  const startEditingStickyNote = (element) => {
+    if (editingStickyNoteRef.current === element.id) return;
+    
+    editingStickyNoteRef.current = element.id;
+    const displayObject = elementsMapRef.current.get(element.id);
+    if (!displayObject) return;
+
+    // Remove existing textarea if any
+    if (textareaRef.current) {
+      textareaRef.current.remove();
+      textareaRef.current = null;
+    }
+
+    // Get current zoom from store
+    const currentZoom = useEditorStore.getState().zoom;
+
+    // Get world position and convert to screen coordinates
+    const worldPos = { x: element.x, y: element.y };
+    const screenPos = worldToScreen(worldPos);
+    if (!screenPos) return;
+
+    // Get canvas bounding rect for absolute positioning
+    const canvasRect = canvasRef.current?.getBoundingClientRect();
+    if (!canvasRect) return;
+
+    // Create textarea for editing
+    const textarea = document.createElement("textarea");
+    textarea.value = element.text || "";
+    textarea.style.position = "fixed";
+    textarea.style.left = `${canvasRect.left + screenPos.x}px`;
+    textarea.style.top = `${canvasRect.top + screenPos.y}px`;
+    textarea.style.width = `${element.width * currentZoom}px`;
+    textarea.style.height = `${element.height * currentZoom}px`;
+    textarea.style.fontSize = `${(element.fontSize || 16) * currentZoom}px`;
+    textarea.style.fontFamily = element.fontFamily || "Arial";
+    textarea.style.color = element.textColor || "#000000";
+    textarea.style.backgroundColor = "rgba(254, 240, 138, 0.95)"; // Semi-transparent yellow
+    textarea.style.border = "2px solid #3b82f6";
+    textarea.style.borderRadius = "4px";
+    textarea.style.padding = "8px";
+    textarea.style.resize = "none";
+    textarea.style.outline = "none";
+    textarea.style.zIndex = "10000";
+    textarea.style.boxSizing = "border-box";
+    textarea.style.overflow = "auto";
+    textarea.style.wordWrap = "break-word";
+    textarea.style.lineHeight = "1.4";
+
+    // Position textarea correctly accounting for zoom and pan
+    const updateTextareaPosition = () => {
+      const currentState = useEditorStore.getState();
+      const currentElement = currentState.elements.find(
+        (el) => el.id === element.id
+      );
+      if (!currentElement) {
+        // Element was deleted, cleanup
+        if (textareaRef.current) {
+          textareaRef.current.remove();
+          textareaRef.current = null;
+        }
+        editingStickyNoteRef.current = null;
+        return;
+      }
+
+      const currentZoom = currentState.zoom;
+      const screenPos = worldToScreen({ x: currentElement.x, y: currentElement.y });
+      const canvasRect = canvasRef.current?.getBoundingClientRect();
+      if (screenPos && canvasRect) {
+        textarea.style.left = `${canvasRect.left + screenPos.x}px`;
+        textarea.style.top = `${canvasRect.top + screenPos.y}px`;
+        textarea.style.width = `${currentElement.width * currentZoom}px`;
+        textarea.style.height = `${currentElement.height * currentZoom}px`;
+        textarea.style.fontSize = `${(currentElement.fontSize || 16) * currentZoom}px`;
+      }
+    };
+
+    // Handle input changes
+    textarea.addEventListener("input", (e) => {
+      const currentElement = useEditorStore.getState().elements.find(
+        (el) => el.id === element.id
+      );
+      if (currentElement) {
+        updateElement(element.id, { text: e.target.value });
+        socketService.emitElementUpdate(projectId, {
+          ...currentElement,
+          text: e.target.value,
+          id: element.id,
+        });
+      }
+    });
+
+    // Handle blur (finish editing)
+    const handleBlur = () => {
+      editingStickyNoteRef.current = null;
+      if (textareaRef.current) {
+        textareaRef.current.remove();
+        textareaRef.current = null;
+      }
+      unsubscribeZoom();
+    };
+
+    textarea.addEventListener("blur", handleBlur);
+
+    // Handle escape key
+    textarea.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        handleBlur();
+      }
+      // Prevent event propagation to avoid triggering canvas actions
+      e.stopPropagation();
+    });
+
+    // Add to DOM
+    document.body.appendChild(textarea);
+    textareaRef.current = textarea;
+    textarea.focus();
+    textarea.select();
+
+    // Update position on zoom/pan changes
+    const unsubscribeZoom = useEditorStore.subscribe(
+      (state) => [state.zoom, state.pan],
+      () => {
+        if (editingStickyNoteRef.current === element.id && textareaRef.current) {
+          updateTextareaPosition();
+        }
+      }
+    );
+  };
+
   const renderElements = () => {
     const worldLayer = worldLayerRef.current;
     const overlayLayer = overlayLayerRef.current;
@@ -1344,6 +1529,32 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
             fill: element.fill || "#000000",
             align: element.align || "left",
           });
+          pixiObject.width = element.width;
+          pixiObject.height = element.height;
+          break;
+        }
+        case "stickynote": {
+          // Create container for sticky note
+          const container = new Container();
+          
+          // Background (yellow sticky note)
+          const background = new Graphics();
+          drawStickyNoteShape(background, element);
+          container.addChild(background);
+          
+          // Text on sticky note
+          const text = new Text(element.text || "Click to edit", {
+            fontSize: element.fontSize || 16,
+            fontFamily: element.fontFamily || "Arial",
+            fill: element.textColor || "#000000",
+            align: "left",
+            wordWrap: true,
+            wordWrapWidth: element.width - 16, // Padding
+          });
+          text.position.set(8, 8); // Padding from edges
+          container.addChild(text);
+          
+          pixiObject = container;
           pixiObject.width = element.width;
           pixiObject.height = element.height;
           break;
@@ -1418,6 +1629,29 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
         if (activeToolRef.current === "select" && !panModifierRef.current) {
           event.stopPropagation();
           const worldPos = toWorldCoordinates(event.data.global);
+          
+          // Handle double-click for sticky note editing
+          if (element.type === "stickynote") {
+            // Check if we're already editing this note
+            if (editingStickyNoteRef.current === element.id) {
+              return; // Already editing, don't start drag
+            }
+            
+            // Detect double-click
+            const clickTime = Date.now();
+            const lastClick = pixiObject._lastClickTime || 0;
+            const timeSinceLastClick = clickTime - lastClick;
+            
+            if (timeSinceLastClick < 300) {
+              // Double click detected - start editing
+              startEditingStickyNote(element);
+              return;
+            }
+            pixiObject._lastClickTime = clickTime;
+            
+            // Single click - allow selection and dragging (fall through)
+          }
+          
           selectElement(
             element.id,
             event.data.originalEvent?.shiftKey || false
@@ -1718,6 +1952,32 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
               fill: element.fill || "#000000",
               align: element.align || "left",
             });
+            pixiObject.width = element.width;
+            pixiObject.height = element.height;
+            break;
+          }
+          case "stickynote": {
+            // Create container for sticky note
+            const container = new Container();
+            
+            // Background (yellow sticky note)
+            const background = new Graphics();
+            drawStickyNoteShape(background, element);
+            container.addChild(background);
+            
+            // Text on sticky note
+            const text = new Text(element.text || "Click to edit", {
+              fontSize: element.fontSize || 16,
+              fontFamily: element.fontFamily || "Arial",
+              fill: element.textColor || "#000000",
+              align: "left",
+              wordWrap: true,
+              wordWrapWidth: element.width - 16,
+            });
+            text.position.set(8, 8);
+            container.addChild(text);
+            
+            pixiObject = container;
             pixiObject.width = element.width;
             pixiObject.height = element.height;
             break;
