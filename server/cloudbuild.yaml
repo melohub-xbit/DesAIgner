@@ -1,11 +1,21 @@
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/desaigner-repo/desaigner-server:$COMMIT_SHA', '.']
+    args: 
+      - 'build'
+      - '-t'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/desaigner-repo/desaigner-server:$SHORT_SHA'
+      - '-t'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/desaigner-repo/desaigner-server:latest'
+      - '.'
+    dir: 'server'
   
   # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/desaigner-repo/desaigner-server:$COMMIT_SHA']
+    args: 
+      - 'push'
+      - '--all-tags'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/desaigner-repo/desaigner-server'
   
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -14,13 +24,14 @@ steps:
       - 'run'
       - 'deploy'
       - 'desaigner-server'
-      - '--image=asia-south1-docker.pkg.dev/$PROJECT_ID/desaigner-repo/desaigner-server:$COMMIT_SHA'
+      - '--image=asia-south1-docker.pkg.dev/$PROJECT_ID/desaigner-repo/desaigner-server:$SHORT_SHA'
       - '--region=asia-south1'
       - '--platform=managed'
       - '--allow-unauthenticated'
 
 images:
-  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/desaigner-repo/desaigner-server:$COMMIT_SHA'
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/desaigner-repo/desaigner-server:$SHORT_SHA'
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/desaigner-repo/desaigner-server:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
