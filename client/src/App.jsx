@@ -14,6 +14,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import ProjectSettings from "./pages/ProjectSettings";
 import About from "./pages/About";
+import Community from "./pages/Community";
 
 const RootRedirect = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -66,6 +67,7 @@ function App() {
         />
         <Route path="/home" element={<Home />} />
         <Route path="/about" element={<About />} />
+        <Route path="/community" element={<Community />} />
         <Route path="/" element={<RootRedirect />} />
       </Routes>
     </Router>

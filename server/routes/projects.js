@@ -78,6 +78,23 @@ router.post("/join-with-code", auth, async (req, res) => {
 });
 
 // ========================
+// Get public projects (no auth required)
+// ========================
+router.get("/public", async (req, res) => {
+  try {
+    const projects = await Project.find({ isPublic: true })
+      .populate("owner", "username email avatar")
+      .select("-elements") // Don't send full elements for listing
+      .sort({ updatedAt: -1 });
+
+    res.json({ projects });
+  } catch (error) {
+    console.error("Get public projects error:", error);
+    res.status(500).json({ error: "Failed to fetch public projects" });
+  }
+});
+
+// ========================
 // Get all user projects
 // ========================
 router.get("/", auth, async (req, res) => {
@@ -97,9 +114,9 @@ router.get("/", auth, async (req, res) => {
 });
 
 // ========================
-// Get single project
+// Get single project (public projects accessible without auth)
 // ========================
-router.get("/:id", auth, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const project = await Project.findById(req.params.id)
       .populate("owner", "username email avatar")
@@ -107,14 +124,39 @@ router.get("/:id", auth, async (req, res) => {
 
     if (!project) return res.status(404).json({ error: "Project not found" });
 
-    const hasAccess =
-      project.owner._id.equals(req.user._id) ||
-      project.collaborators.some((c) => c.user._id.equals(req.user._id)) ||
-      project.isPublic;
+    // If project is public, allow access without auth
+    if (project.isPublic) {
+      return res.json({ project });
+    }
 
-    if (!hasAccess) return res.status(403).json({ error: "Access denied" });
+    // For private projects, require auth
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
 
-    res.json({ project });
+    // Verify token and check access
+    const jwt = require("jsonwebtoken");
+    const User = require("../models/User");
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.userId);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid token" });
+      }
+
+      const hasAccess =
+        project.owner._id.equals(user._id) ||
+        project.collaborators.some((c) => c.user._id.equals(user._id));
+
+      if (!hasAccess) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      res.json({ project });
+    } catch (err) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
   } catch (error) {
     console.error("Get project error:", error);
     res.status(500).json({ error: "Failed to fetch project" });
@@ -169,7 +211,7 @@ router.put("/:id", auth, async (req, res) => {
     if (!isOwner && !isEditor)
       return res.status(403).json({ error: "Access denied" });
 
-    const { name, description, elements, canvasSettings, thumbnail } = req.body;
+    const { name, description, elements, canvasSettings, thumbnail, isPublic } = req.body;
 
     if (name) project.name = name;
     if (description !== undefined) project.description = description;
@@ -177,6 +219,7 @@ router.put("/:id", auth, async (req, res) => {
     if (canvasSettings)
       project.canvasSettings = { ...project.canvasSettings, ...canvasSettings };
     if (thumbnail) project.thumbnail = thumbnail;
+    if (isPublic !== undefined) project.isPublic = isPublic;
 
     project.version += 1;
     await project.save();
@@ -368,6 +411,35 @@ router.delete("/:id/collaborators/:collaboratorId", auth, async (req, res) => {
   } catch (error) {
     console.error("Remove collaborator error:", error);
     res.status(500).json({ error: "Failed to remove collaborator" });
+  }
+});
+
+// ========================
+// Toggle project public status (owner only)
+// ========================
+router.patch("/:id/public", auth, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+
+    if (!project.owner.equals(req.user._id))
+      return res.status(403).json({ error: "Only owner can change public status" });
+
+    project.isPublic = !project.isPublic;
+    project.version += 1;
+    await project.save();
+
+    await project.populate("owner", "username email avatar");
+
+    res.json({
+      project,
+      message: project.isPublic
+        ? "Project published to community"
+        : "Project removed from community",
+    });
+  } catch (error) {
+    console.error("Toggle public status error:", error);
+    res.status(500).json({ error: "Failed to update public status" });
   }
 });
 

@@ -44,9 +44,11 @@ export const authAPI = {
 export const projectsAPI = {
   getAll: () => api.get("/projects"),
   getOne: (id) => api.get(`/projects/${id}`),
+  getPublic: () => api.get("/projects/public"),
   create: (data) => api.post("/projects", data),
   update: (id, data) => api.put(`/projects/${id}`, data),
   delete: (id) => api.delete(`/projects/${id}`),
+  togglePublic: (id) => api.patch(`/projects/${id}/public`),
   addCollaborator: (id, data) =>
     api.post(`/projects/${id}/collaborators`, data),
   updateCollaboratorRole: (id, collaboratorId, data) =>

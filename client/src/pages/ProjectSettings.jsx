@@ -13,6 +13,8 @@ import {
   Users,
   UserCheck,
   UserCog,
+  Globe,
+  Globe2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../store/authStore";
@@ -52,6 +54,7 @@ const ProjectSettings = () => {
 
   const [pendingRoleUserId, setPendingRoleUserId] = useState(null);
   const [removingUserId, setRemovingUserId] = useState(null);
+  const [isTogglingPublic, setIsTogglingPublic] = useState(false);
 
   useEffect(() => {
     loadProject();
@@ -204,6 +207,22 @@ const ProjectSettings = () => {
       toast.error(message);
     } finally {
       setRemovingUserId(null);
+    }
+  };
+
+  const handleTogglePublic = async () => {
+    if (!isOwner) return;
+    setIsTogglingPublic(true);
+    try {
+      const { data } = await projectsAPI.togglePublic(projectId);
+      setProject(data.project);
+      toast.success(data.message);
+    } catch (error) {
+      const message =
+        error.response?.data?.error || "Failed to update public status";
+      toast.error(message);
+    } finally {
+      setIsTogglingPublic(false);
     }
   };
 
@@ -422,6 +441,65 @@ const ProjectSettings = () => {
                 </div>
               </section>
             </CardSpotlight>
+
+            {isOwner && (
+              <CardSpotlight className="bg-black/50 backdrop-blur-xl border border-white/10 lg:col-span-2">
+                <section className="p-6">
+                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    {project.isPublic ? (
+                      <Globe className="w-4 h-4 text-green-400" />
+                    ) : (
+                      <Globe2 className="w-4 h-4 text-gray-400" />
+                    )}
+                    Community sharing
+                  </h2>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-white font-medium mb-1">
+                          {project.isPublic
+                            ? "Project is public"
+                            : "Project is private"}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {project.isPublic
+                            ? "Your project is visible to everyone in the community"
+                            : "Make your project public to share it with the community"}
+                        </p>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleTogglePublic}
+                        disabled={isTogglingPublic}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                          project.isPublic
+                            ? "bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 hover:border-red-500/50 text-red-400"
+                            : "bg-gradient-to-r from-cyan-600 to-purple-600 hover:shadow-2xl hover:shadow-purple-500/50 text-white"
+                        } disabled:opacity-60 disabled:cursor-not-allowed`}
+                      >
+                        {isTogglingPublic ? (
+                          <>
+                            <RefreshCcw className="w-4 h-4 animate-spin" />
+                            <span>Updating...</span>
+                          </>
+                        ) : project.isPublic ? (
+                          <>
+                            <Globe2 className="w-4 h-4" />
+                            <span>Make Private</span>
+                          </>
+                        ) : (
+                          <>
+                            <Globe className="w-4 h-4" />
+                            <span>Publish to Community</span>
+                          </>
+                        )}
+                      </motion.button>
+                    </div>
+                  </div>
+                </section>
+              </CardSpotlight>
+            )}
 
             <CardSpotlight className="bg-black/50 backdrop-blur-xl border border-white/10 lg:col-span-2">
               <section className="p-6">

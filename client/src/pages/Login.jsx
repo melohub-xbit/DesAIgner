@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { LogIn, Sparkles, ArrowRight, Mail, Lock } from "lucide-react";
 import toast from "react-hot-toast";
@@ -11,6 +11,7 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const handleSubmit = async (e) => {
@@ -21,7 +22,9 @@ const Login = () => {
       const { data } = await authAPI.login(formData);
       setAuth(data.user, data.token);
       toast.success("Welcome back!");
-      navigate("/dashboard");
+      // Redirect to returnTo path if provided, otherwise to dashboard
+      const returnTo = location.state?.returnTo || "/dashboard";
+      navigate(returnTo);
     } catch (error) {
       toast.error(error.response?.data?.error || "Login failed");
     } finally {
