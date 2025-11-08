@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -25,16 +25,21 @@ import {
   X,
   Settings,
   Palette,
+  FileDown,
+  Image,
+  ChevronDown,
 } from "lucide-react";
 import { useEditorStore } from "../../store/editorStore";
 import { projectsAPI } from "../../utils/api";
 import toast from "react-hot-toast";
 
-const Toolbar = ({ project, projectId, onProjectUpdate, onAIRequest, onExport }) => {
+const Toolbar = ({ project, projectId, onProjectUpdate, onAIRequest, onExportImage, onExportProject }) => {
   const navigate = useNavigate();
   const [isRenaming, setIsRenaming] = useState(false);
   const [projectName, setProjectName] = useState(project?.name || "");
   const [isSaving, setIsSaving] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef(null);
 
   const {
     activeTool,
@@ -56,6 +61,20 @@ const Toolbar = ({ project, projectId, onProjectUpdate, onAIRequest, onExport })
     }
   }, [project?.name]);
 
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
+        setShowExportMenu(false);
+      }
+    };
+
+    if (showExportMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showExportMenu]);
+
   const tools = [
     { id: "select", icon: MousePointer2, label: "Select (Ctrl+Alt+V)" },
     { id: "pan", icon: Hand, label: "Pan (Ctrl+Alt+H)" },
@@ -68,12 +87,22 @@ const Toolbar = ({ project, projectId, onProjectUpdate, onAIRequest, onExport })
     { id: "text", icon: Type, label: "Text (Ctrl+Alt+T)" },
   ];
 
-  const handleExport = () => {
-    if (typeof onExport === "function") {
-      onExport();
+  const handleExportImage = () => {
+    if (typeof onExportImage === "function") {
+      onExportImage();
     } else {
-      toast.error("Export function not available");
+      toast.error("Export image function not available");
     }
+    setShowExportMenu(false);
+  };
+
+  const handleExportProject = () => {
+    if (typeof onExportProject === "function") {
+      onExportProject();
+    } else {
+      toast.error("Export project function not available");
+    }
+    setShowExportMenu(false);
   };
 
   const handleAI = () => {
@@ -321,7 +350,7 @@ const Toolbar = ({ project, projectId, onProjectUpdate, onAIRequest, onExport })
             <span className="text-sm hidden md:inline">Settings</span>
           </motion.button>
 
-          <motion.button
+          {/* <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleAI}
@@ -331,16 +360,60 @@ const Toolbar = ({ project, projectId, onProjectUpdate, onAIRequest, onExport })
             <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur opacity-30 group-hover:opacity-50 transition-opacity" />
             <Sparkles className="w-4 h-4 relative" />
             <span className="text-sm relative hidden sm:inline">AI</span>
-          </motion.button>
+          </motion.button> */}
 
           <motion.button
             whileHover={{ scale: 1.05, rotate: 5 }}
             whileTap={{ scale: 0.95 }}
-            onClick={handleExport}
-            className="p-2.5 hover:bg-white/10 rounded-xl transition-all duration-300 text-gray-300 hover:text-white"
+            onClick={() => setShowExportMenu(!showExportMenu)}
+            className="relative p-2.5 hover:bg-white/10 rounded-xl transition-all duration-300 text-gray-300 hover:text-white"
             title="Export"
+            ref={exportMenuRef}
           >
             <Download className="w-5 h-5" />
+            
+            {/* Export Dropdown Menu */}
+            {showExportMenu && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                className="absolute top-full right-0 mt-2 w-56 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl overflow-hidden z-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-2">
+                  <motion.button
+                    whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+                    onClick={handleExportImage}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200"
+                  >
+                    <div className="p-2 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-lg border border-blue-500/30">
+                      <Image className="w-4 h-4 text-blue-400" />
+                    </div>
+                    <div>
+                      <div className="text-white font-medium text-sm">Export as PNG</div>
+                      <div className="text-gray-400 text-xs">Save canvas as image</div>
+                    </div>
+                  </motion.button>
+                  
+                  <div className="h-px bg-white/10 my-2" />
+                  
+                  <motion.button
+                    whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+                    onClick={handleExportProject}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200"
+                  >
+                    <div className="p-2 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg border border-purple-500/30">
+                      <FileDown className="w-4 h-4 text-purple-400" />
+                    </div>
+                    <div>
+                      <div className="text-white font-medium text-sm">Export Project</div>
+                      <div className="text-gray-400 text-xs">Save as .json file</div>
+                    </div>
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
           </motion.button>
 
           <div className="flex items-center gap-2 px-3 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">

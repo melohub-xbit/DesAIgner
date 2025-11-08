@@ -283,7 +283,7 @@ const Editor = () => {
         projectId={projectId}
         onProjectUpdate={handleProjectUpdate}
         onAIRequest={() => setAssistantOpen(true)}
-        onExport={() => {
+        onExportImage={() => {
           if (canvasRef.current?.exportCanvas) {
             canvasRef.current
               .exportCanvas("png", 1.0)
@@ -294,6 +294,34 @@ const Editor = () => {
                 console.error("Export failed:", error);
                 toast.error("Failed to export canvas");
               });
+          }
+        }}
+        onExportProject={() => {
+          try {
+            const projectData = {
+              name: project.name,
+              description: project.description || "",
+              elements: elements,
+              canvasSettings: useEditorStore.getState().canvasSettings,
+              version: "1.0",
+              exportedAt: new Date().toISOString(),
+            };
+
+            const dataStr = JSON.stringify(projectData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${project.name.replace(/[^a-z0-9]/gi, "_")}_project.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            toast.success("Project exported successfully!");
+          } catch (error) {
+            console.error("Export project failed:", error);
+            toast.error("Failed to export project");
           }
         }}
       />

@@ -126,14 +126,14 @@ router.get("/:id", auth, async (req, res) => {
 // ========================
 router.post("/", auth, async (req, res) => {
   try {
-    const { name, description, canvasSettings } = req.body;
+    const { name, description, canvasSettings, elements } = req.body;
 
     const project = new Project({
       name,
       description,
       owner: req.user._id,
       canvasSettings: canvasSettings || {},
-      elements: [],
+      elements: elements || [],
     });
 
     await project.save();

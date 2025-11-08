@@ -13,6 +13,8 @@ import {
   Grid3x3,
   ArrowRight,
   Info,
+  Upload,
+  FileJson,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../store/authStore";
@@ -27,6 +29,8 @@ const Dashboard = () => {
   const [newProjectName, setNewProjectName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
+  const [importMode, setImportMode] = useState(false);
+  const [importedData, setImportedData] = useState(null);
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
@@ -50,17 +54,60 @@ const Dashboard = () => {
     if (!newProjectName.trim()) return;
 
     try {
-      const { data } = await projectsAPI.create({
+      const projectData = {
         name: newProjectName,
         description: "",
-      });
-      toast.success("Project created!");
+      };
+
+      // If importing, add the imported data
+      if (importMode && importedData) {
+        projectData.elements = importedData.elements || [];
+        projectData.canvasSettings = importedData.canvasSettings || {};
+        projectData.description = importedData.description || "";
+      }
+
+      const { data } = await projectsAPI.create(projectData);
+      toast.success(importMode ? "Project imported successfully!" : "Project created!");
       setShowCreateModal(false);
       setNewProjectName("");
+      setImportMode(false);
+      setImportedData(null);
       navigate(`/editor/${data.project._id}`);
     } catch (error) {
       toast.error("Failed to create project");
     }
+  };
+
+  const handleFileImport = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".json")) {
+      toast.error("Please select a valid .json project file");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        
+        // Validate the imported data structure
+        if (!data.elements || !Array.isArray(data.elements)) {
+          toast.error("Invalid project file format");
+          return;
+        }
+
+        setImportedData(data);
+        setNewProjectName(data.name || "Imported Project");
+        setImportMode(true);
+        toast.success("Project file loaded successfully!");
+      } catch (error) {
+        console.error("Import error:", error);
+        toast.error("Failed to parse project file");
+      }
+    };
+    reader.readAsText(file);
   };
 
   const handleLogout = () => {
@@ -387,7 +434,12 @@ const Dashboard = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={() => setShowCreateModal(false)}
+          onClick={() => {
+            setShowCreateModal(false);
+            setImportMode(false);
+            setImportedData(null);
+            setNewProjectName("");
+          }}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -404,14 +456,66 @@ const Dashboard = () => {
             <div className="relative bg-black border border-white/20 rounded-3xl p-8">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-3 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 rounded-xl border border-cyan-500/30">
-                  <Plus className="w-6 h-6 text-cyan-400" />
+                  {importMode ? (
+                    <Upload className="w-6 h-6 text-purple-400" />
+                  ) : (
+                    <Plus className="w-6 h-6 text-cyan-400" />
+                  )}
                 </div>
                 <h3 className="text-2xl font-bold text-white">
-                  Create New Project
+                  {importMode ? "Import Project" : "Create New Project"}
                 </h3>
               </div>
 
               <form onSubmit={handleCreateProject} className="space-y-6">
+                {/* Import/Create Toggle */}
+                {!importMode && (
+                  <div className="mb-4">
+                    <label
+                      htmlFor="file-import"
+                      className="block w-full cursor-pointer"
+                    >
+                      <div className="p-4 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-cyan-500/30 rounded-xl transition-all duration-300">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg border border-purple-500/30">
+                            <FileJson className="w-5 h-5 text-purple-400" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-white font-medium text-sm">
+                              Import existing project
+                            </div>
+                            <div className="text-gray-400 text-xs">
+                              Upload a .json project file
+                            </div>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-gray-400" />
+                        </div>
+                      </div>
+                    </label>
+                    <input
+                      id="file-import"
+                      type="file"
+                      accept=".json"
+                      onChange={handleFileImport}
+                      className="hidden"
+                    />
+                  </div>
+                )}
+
+                {importMode && importedData && (
+                  <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
+                    <div className="flex items-center gap-2 text-green-400 text-sm">
+                      <FileJson className="w-4 h-4" />
+                      <span className="font-medium">Project file loaded</span>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-400">
+                      {importedData.elements?.length || 0} elements •{" "}
+                      {importedData.canvasSettings?.width || 1920}x
+                      {importedData.canvasSettings?.height || 1080}
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-2">
                     Project Name
@@ -429,7 +533,12 @@ const Dashboard = () => {
                 <div className="flex gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => setShowCreateModal(false)}
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      setImportMode(false);
+                      setImportedData(null);
+                      setNewProjectName("");
+                    }}
                     className="flex-1 px-6 py-3.5 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 text-white rounded-xl transition-all duration-300 font-medium"
                   >
                     Cancel
@@ -440,7 +549,7 @@ const Dashboard = () => {
                     type="submit"
                     className="flex-1 px-6 py-3.5 bg-gradient-to-r from-cyan-600 to-purple-600 hover:shadow-2xl hover:shadow-purple-500/50 text-white rounded-xl transition-all duration-300 font-medium"
                   >
-                    Create Project
+                    {importMode ? "Import Project" : "Create Project"}
                   </motion.button>
                 </div>
               </form>

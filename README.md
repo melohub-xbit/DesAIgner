@@ -11,7 +11,8 @@ Built for the MERNIFY Hackathon - A modern, performant design tool enabling team
 - **Real-time Collaboration**: Multiple users can work on the same project simultaneously with live cursor tracking
 - **Infinite PixiJS Canvas**: High-performance canvas rendering with pan and zoom capabilities
 - **Rich Design Tools**:
-  - Shape tools (Rectangle, Circle)
+  - Shape tools (Rectangle, Circle, Triangle, Arrow, Line)
+  - Freehand drawing tool
   - Text tool with customizable fonts and sizes
   - Image upload and asset management
   - Selection and transformation tools
@@ -19,6 +20,11 @@ Built for the MERNIFY Hackathon - A modern, performant design tool enabling team
 - **Properties Panel**: Fine-tune element properties (position, size, rotation, opacity, colors)
 - **Undo/Redo**: Full history management for all design actions
 - **Asset Library**: Upload and manage images with automatic thumbnail generation
+- **Export & Import**:
+  - Export canvas as PNG image
+  - Export entire project as JSON file for backup/sharing
+  - Import projects from JSON files to continue work
+  - Share projects between users via file export
 
 ### Collaboration Features
 
