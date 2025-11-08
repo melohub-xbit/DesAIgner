@@ -24,7 +24,8 @@ const Login = () => {
       toast.success("Welcome back!");
       // Redirect to returnTo path if provided, otherwise to dashboard
       const returnTo = location.state?.returnTo || "/dashboard";
-      navigate(returnTo);
+      // Use replace to avoid login page staying in history
+      navigate(returnTo, { replace: true });
     } catch (error) {
       toast.error(error.response?.data?.error || "Login failed");
     } finally {

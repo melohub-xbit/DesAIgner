@@ -1,5 +1,6 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
   Palette,
   Sparkles,
@@ -12,6 +13,9 @@ import {
   Mail,
   ArrowLeft,
   LogOut,
+  ChevronDown,
+  FolderOpen,
+  Share2,
 } from "lucide-react";
 import { Spotlight } from "../components/ui/spotlight-new";
 import { CardSpotlight } from "../components/ui/CardSpotlight";
@@ -112,6 +116,45 @@ const features = [
 const About = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [userStats, setUserStats] = useState({
+    totalProjects: 0,
+    publicProjects: 0,
+  });
+
+  useEffect(() => {
+    // Close user menu when clicking outside
+    const handleClickOutside = (event) => {
+      if (showUserMenu && !event.target.closest('.user-menu-container')) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserMenu]);
+
+  useEffect(() => {
+    // Load user stats when authenticated
+    const loadUserStats = async () => {
+      if (isAuthenticated) {
+        try {
+          const { projectsAPI } = await import("../utils/api");
+          const { data } = await projectsAPI.getAll();
+          const total = data.projects.length;
+          const publicCount = data.projects.filter(p => p.isPublic).length;
+          setUserStats({
+            totalProjects: total,
+            publicProjects: publicCount,
+          });
+        } catch (error) {
+          console.error("Failed to load user stats:", error);
+        }
+      }
+    };
+
+    loadUserStats();
+  }, [isAuthenticated]);
 
   const handleBack = () => {
     if (isAuthenticated) {
@@ -139,7 +182,7 @@ const About = () => {
       <div className="fixed inset-0 bg-gradient-to-br from-blue-950/20 via-purple-950/10 to-pink-950/20 pointer-events-none" />
 
       {/* Header */}
-      <header className="relative z-10 border-b border-white/10 bg-black/50 backdrop-blur-xl">
+      <header className="relative z-[60] border-b border-white/10 bg-black/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <motion.div
@@ -170,21 +213,86 @@ const About = () => {
                 animate={{ opacity: 1, x: 0 }}
                 className="flex items-center gap-4"
               >
-                <div className="hidden sm:flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center text-sm font-bold">
-                    {user?.username?.[0]?.toUpperCase()}
-                  </div>
-                  <span className="text-gray-300 font-medium">
-                    {user?.username}
-                  </span>
+                {/* User Profile Dropdown */}
+                <div className="relative user-menu-container">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center gap-3 px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-full transition-all duration-300"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center text-sm font-bold">
+                      {user?.username?.[0]?.toUpperCase()}
+                    </div>
+                    <span className="hidden sm:inline text-gray-300 font-medium">
+                      {user?.username}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+                  </motion.button>
+
+                  {/* Dropdown Menu */}
+                  <AnimatePresence>
+                    {showUserMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 mt-2 w-80 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100]"
+                      >
+                        {/* User Info Section */}
+                        <div className="p-4 border-b border-white/10 bg-gradient-to-br from-cyan-500/10 to-purple-500/10">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center text-lg font-bold">
+                              {user?.username?.[0]?.toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-white font-semibold text-base">{user?.username}</p>
+                              <p className="text-gray-400 text-xs truncate">{user?.email}</p>
+                            </div>
+                          </div>
+                          
+                          {/* User Statistics */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-white/5">
+                              <div className="flex items-center gap-2 mb-1">
+                                <FolderOpen className="w-4 h-4 text-cyan-400" />
+                                <span className="text-xs text-gray-400">Projects</span>
+                              </div>
+                              <p className="text-2xl font-bold text-white">{userStats.totalProjects}</p>
+                            </div>
+                            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-white/5">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Share2 className="w-4 h-4 text-purple-400" />
+                                <span className="text-xs text-gray-400">Public</span>
+                              </div>
+                              <p className="text-2xl font-bold text-white">{userStats.publicProjects}</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Actions Section */}
+                        <div className="p-3">
+                          <button
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              handleLogout();
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-400 hover:bg-red-500/10 rounded-xl transition-all duration-200 group"
+                          >
+                            <div className="w-9 h-9 rounded-lg bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
+                              <LogOut className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-semibold text-sm">Logout</p>
+                              <p className="text-xs text-gray-400">Sign out of your account</p>
+                            </div>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="group flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 text-white rounded-full transition-all duration-300"
-                >
-                  <LogOut className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
               </motion.div>
             )}
           </div>

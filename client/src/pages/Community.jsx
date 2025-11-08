@@ -28,6 +28,14 @@ const Community = () => {
     loadProjects();
   }, []);
 
+  const handleGoBack = () => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    } else {
+      navigate("/home");
+    }
+  };
+
   const loadProjects = async ({ silent = false } = {}) => {
     if (silent) {
       setIsRefreshing(true);
@@ -53,7 +61,7 @@ const Community = () => {
     // Check if user is logged in
     if (!isAuthenticated) {
       toast.error("Please login to download projects");
-      navigate("/login", { state: { returnTo: "/community" } });
+      navigate("/login", { state: { returnTo: "/community" }, replace: true });
       return;
     }
 
@@ -89,7 +97,7 @@ const Community = () => {
       console.error("Download error:", error);
       if (error.response?.status === 401) {
         toast.error("Please login to download projects");
-        navigate("/login", { state: { returnTo: "/community" } });
+        navigate("/login", { state: { returnTo: "/community" }, replace: true });
       } else {
         toast.error("Failed to download project");
       }
@@ -142,7 +150,7 @@ const Community = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => navigate(-1)}
+                onClick={handleGoBack}
                 className="p-2 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 text-gray-200"
                 title="Go back"
               >
