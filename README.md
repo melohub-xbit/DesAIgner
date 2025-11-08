@@ -4,368 +4,232 @@
 
 Built for the MERNIFY Hackathon - A modern, performant design tool enabling teams to create, edit, and share visual designs on an infinite PixiJS canvas with multi-user live collaboration.
 
-## 🌟 Features
+---
 
-### Core Features
+## 🌟 Project Overview
 
-- **Real-time Collaboration**: Multiple users can work on the same project simultaneously with live cursor tracking
-- **Infinite PixiJS Canvas**: High-performance canvas rendering with pan and zoom capabilities
-- **Rich Design Tools**:
-  - Shape tools (Rectangle, Circle, Triangle, Arrow, Line)
-  - Freehand drawing tool
-  - Text tool with customizable fonts and sizes
-  - Image upload and asset management
-  - Selection and transformation tools
-- **Layer Management**: Organize and manage design elements with a comprehensive layer panel
-- **Properties Panel**: Fine-tune element properties (position, size, rotation, opacity, colors)
-- **Undo/Redo**: Full history management for all design actions
-- **Asset Library**: Upload and manage images with automatic thumbnail generation
-- **Export & Import**:
-  - Export canvas as PNG image
-  - Export entire project as JSON file for backup/sharing
-  - Import projects from JSON files to continue work
-  - Share projects between users via file export
+DesAIgner is a full-stack, real-time collaborative design application that empowers teams to work together on an infinite canvas. It combines high-performance graphics, live multi-user editing, and AI-powered tools for an intuitive design experience. Designed for creative professionals and students, it supports powerful shape, text, and asset tools, seamless project management, and foundation-level AI content suggestion. Built on MERN with PixiJS and strong security, DesAIgner is ideal for rapid visual prototyping and team brainstorming.
 
-### Collaboration Features
+---
 
-- **Live Cursors**: See collaborators' cursors in real-time
-- **User Presence**: Track who's currently working on the project
-- **Real-time Sync**: All changes sync instantly across all connected users
-- **Collaborative Editing**: Multiple users can edit different elements simultaneously
-
-### AI-Powered Features (Foundation)
-
-- **Color Suggestions**: AI-powered color palette generation
-- **Layout Suggestions**: Smart layout recommendations
-- **Auto-alignment**: Intelligent element alignment
-
-### UX & Performance
-
-- **Smooth Animations**: Powered by Framer Motion
-- **Responsive Design**: Works on desktop and tablet devices
-- **Auto-save**: Changes automatically saved every 2 seconds
-- **Optimized Rendering**: PixiJS ensures 60fps performance
-- **Toast Notifications**: User-friendly feedback for all actions
-
-## 🏗️ Tech Stack
-
-### Frontend
-
-- **React 18** - UI framework
-- **PixiJS 7** - High-performance 2D rendering
-- **Vite** - Lightning-fast build tool
-- **Tailwind CSS** - Utility-first styling
-- **Zustand** - State management
-- **Socket.io Client** - Real-time communication
-- **Framer Motion** - Smooth animations
-- **React Router** - Client-side routing
-- **Axios** - HTTP client
-
-### Backend
-
-- **Node.js** - Runtime environment
-- **Express** - Web framework
-- **MongoDB** - Database
-- **Mongoose** - ODM for MongoDB
-- **Socket.io** - WebSocket server
-- **JWT** - Authentication
-- **Multer & Sharp** - Image upload and processing
-- **Helmet** - Security middleware
-- **Compression** - Response compression
-
-## 🚀 Quick Start
+## 🚀 Setup Instructions
 
 ### Prerequisites
 
-- Node.js 18+ installed
+- Node.js 18+
 - MongoDB installed and running
 - npm or yarn package manager
 
 ### Installation
 
 1. **Clone the repository**
-
-```bash
-git clone <repository-url>
-cd DesAIgner
-```
+   ```bash
+   git clone https://github.com/melohub-xbit/DesAIgner.git
+   cd DesAIgner
+   ```
 
 2. **Install server dependencies**
-
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
 3. **Install client dependencies**
-
-```bash
-cd client
-npm install
-cd ..
-```
+   ```bash
+   cd client
+   npm install
+   cd ..
+   ```
 
 4. **Set up environment variables**
+   - Copy the example env file:
+     ```bash
+     cp .env.example .env
+     ```
+   - Edit `.env` and add your values:
+     - MongoDB connection string
+     - JWT secret
+     - (Optional) Gemini AI API key
 
-```bash
-# Copy the example env file
-cp .env.example .env
+   - For client, configure `client/.env.example` if needed.
 
-# Edit .env and add your values:
-# - MongoDB connection string
-# - JWT secret
-# - Optional: OpenAI API key for AI features
-```
+5. **Start MongoDB** (if not running)
+   ```bash
+   # Windows
+   net start MongoDB
 
-5. **Start MongoDB** (if not already running)
+   # macOS/Linux
+   sudo systemctl start mongod
+   ```
 
-```bash
-# On Windows (if installed as service)
-net start MongoDB
-
-# On macOS/Linux
-sudo systemctl start mongod
-```
-
-6. **Start the development servers**
-
-```bash
-# Run both frontend and backend concurrently
-npm run dev
-```
-
-This will start:
-
-- Backend server on `http://localhost:5000`
-- Frontend dev server on `http://localhost:5173`
+6. **Start development servers**
+   ```bash
+   npm run dev
+   ```
+   - Backend: `http://localhost:5000`
+   - Frontend: `http://localhost:5173`
 
 7. **Open your browser**
-   Navigate to `http://localhost:5173`
+   - Go to `http://localhost:5173`
 
-## 📁 Project Structure
+---
+
+## ✨ Feature List
+
+### Core Features
+
+- **Real-time Collaboration:** Multi-user, live design on the same canvas, with presence and cursor tracking.
+- **Infinite PixiJS Canvas:** Pan/zoomable, high-performance design workspace.
+- **Rich Tools:** Shape (rectangle, circle, triangle, arrow, line), freehand drawing, text, images, and transformation tools.
+- **Layer Management:** Powerful layer panel for organization.
+- **Properties Panel:** Edit position, size, rotation, colors, opacity, etc.
+- **Undo/Redo:** Complete change history.
+- **Asset Library:** Upload images, thumbnails auto-generated.
+- **Export/Import:** Save as PNG, export/share entire projects as JSON.
+
+### Collaboration & AI
+
+- **Live Cursors & User Presence**
+- **Real-Time Sync** for all changes
+- **Collaborative Editing:** Multiple users editing different elements
+- **AI Features (Foundation):**
+  - Color palette suggestions
+  - Layout recommendations
+  - Auto-alignment
+
+### UX & Productivity
+
+- **Smooth Animations:** Framer Motion-powered
+- **Responsive Design:** Works on desktop and tablets
+- **Auto-save:** Every 2 seconds
+- **Optimized Rendering:** PixiJS, 60fps, large projects supported
+- **Toast Notifications:** All major actions
+
+### Security
+
+- JWT-based authentication
+- Bcrypt password hashing
+- CORS
+
+### Hackathon Scope & Roadmap
+
+- ✔️ All above features fully implemented for demo/hackathon
+- 🚧 Planned: advanced shape tools, SVG/PDF export, group/ungroup, enhanced AI, Figma import, detailed comments, version history
+
+---
+
+## 🏗️ Tech Stack Used
+
+### Frontend
+
+- **React 18** – Component-based UI
+- **PixiJS 7** – 2D rendering
+- **Vite** – Fast dev/build
+- **Tailwind CSS** – Utility-first styling
+- **Zustand** – Global state management
+- **Socket.io Client** – Real-time comms
+- **Framer Motion** – Animations
+- **React Router** – Routing
+- **Axios** – HTTP
+
+### Backend
+
+- **Node.js** – Server runtime
+- **Express** – REST API server
+- **MongoDB** – NoSQL DB
+- **Mongoose** – Object modeling
+- **Socket.io** – WebSocket real-time server
+- **JWT** – Auth
+- **Multer/Sharp** – Image uploads
+- **Helmet, Compression** – Security & performance
+
+---
+
+## 🗂️ Project Structure
 
 ```
 DesAIgner/
-├── client/                 # React frontend
+├── client/                # React frontend
 │   ├── src/
-│   │   ├── components/    # Reusable components
-│   │   │   └── editor/   # Editor-specific components
-│   │   ├── pages/        # Page components
-│   │   ├── store/        # Zustand state management
-│   │   ├── utils/        # Utilities (API, Socket)
-│   │   ├── App.jsx       # Root component
-│   │   └── main.jsx      # Entry point
+│   │    ├── components/
+│   │    │    └── editor/       # Editor widgets
+│   │    ├── pages/             # App pages
+│   │    ├── store/             # Zustand logic
+│   │    ├── utils/             # Helpers & services
+│   │    ├── App.jsx
+│   │    └── main.jsx
 │   ├── index.html
 │   ├── package.json
 │   └── vite.config.js
-│
-├── server/                # Node.js backend
-│   ├── models/           # Mongoose models
-│   ├── routes/           # API routes
-│   ├── socket/           # Socket.io handlers
-│   ├── middleware/       # Express middleware
-│   └── index.js          # Server entry point
-│
-├── uploads/              # User-uploaded assets (gitignored)
-├── .env.example          # Environment variables template
-├── package.json          # Server dependencies
+├── server/               # Node backend
+│   ├── models/
+│   ├── routes/
+│   ├── socket/
+│   ├── middleware/
+│   └── index.js
+├── uploads/              # User assets (gitignored)
+├── .env.example          # Environment template
+├── package.json          # Project scripts, dependencies
 └── README.md
 ```
 
-## 🎮 Usage Guide
+---
 
-### Creating a Project
+## 📋 Usage Highlights
 
-1. Sign up or log in
-2. Click "New Project" on the dashboard
-3. Enter a project name and start designing
+- **Create Projects:** Sign up, use dashboard, "New Project"
+- **Design Tools:** Select (ctrl+alt+V), Rectangle (ctrl+alt+R), Circle (ctrl+alt+C), Text (ctrl+alt+T), freehand drawing, asset uploads
+- **Shortcuts:** For tools, Cmd/Ctrl+Z for undo, Shift+Z for redo, cmd/ctrl + mouse wheel to zoom
+- **Collaboration:** Share project, see others live, instant updates
 
-### Using Design Tools
+---
 
-- **Select Tool (V)**: Click to select elements, drag to move
-- **Rectangle Tool (R)**: Click to create rectangles
-- **Circle Tool (C)**: Click to create circles
-- **Text Tool (T)**: Click to add text elements
+## 📦 Available NPM Scripts
 
-### Keyboard Shortcuts
+- `npm run dev` — Run both backend and frontend
+- `npm run server` — Server only
+- `npm run client` — Client only
+- `npm start` — Start server for production
+- `npm run install-all` — Install all deps
 
-- `V` - Select tool
-- `R` - Rectangle tool
-- `C` - Circle tool
-- `T` - Text tool
-- `Ctrl/Cmd + Z` - Undo
-- `Ctrl/Cmd + Shift + Z` - Redo
-- `Delete` - Delete selected element
-- `Mouse Wheel` - Pan canvas
-- `Ctrl/Cmd + Mouse Wheel` - Zoom
+#### Client
 
-### Canvas Navigation
+- `cd client && npm run dev` — Dev server (frontend only)
+- `npm run build` — Build for production
+- `npm run preview` — Preview prod build
 
-- **Pan**: Scroll with mouse wheel
-- **Zoom**: Hold Ctrl/Cmd and scroll
-- **Zoom Controls**: Use +/- buttons in toolbar
-
-### Collaboration
-
-1. Share project with collaborators via email
-2. Collaborators can join and edit in real-time
-3. See live cursors and presence indicators
-
-## 🔧 Available Scripts
-
-### Root (Server)
-
-```bash
-npm run dev          # Run both client and server
-npm run server       # Run server only
-npm run client       # Run client only
-npm start            # Production server
-npm run install-all  # Install all dependencies
-```
-
-### Client
-
-```bash
-cd client
-npm run dev          # Development server
-npm run build        # Production build
-npm run preview      # Preview production build
-```
+---
 
 ## 🌐 API Endpoints
 
-### Authentication
-
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user
-
-### Projects
-
-- `GET /api/projects` - Get all user projects
-- `GET /api/projects/:id` - Get single project
-- `POST /api/projects` - Create new project
-- `PUT /api/projects/:id` - Update project
-- `DELETE /api/projects/:id` - Delete project
-- `POST /api/projects/:id/collaborators` - Add collaborator
-
-### Assets
-
-- `GET /api/assets` - Get user assets
-- `POST /api/assets/upload` - Upload asset
-- `DELETE /api/assets/:id` - Delete asset
-
-### AI
-
-- `POST /api/ai/create-design` - Generate multi-element layouts with Gemini
+- **Auth:** `/api/auth/register`, `/api/auth/login`, `/api/auth/me`
+- **Projects:** `GET/POST/PUT/DELETE /api/projects`
+- **Assets:** `GET/POST/DELETE /api/assets`
+- **AI:** `POST /api/ai/create-design`
 
 ## 🔌 Socket Events
 
-### Client → Server
+- **Client → Server:** join-project, leave-project, element-add, element-update, cursor-move, etc.
+- **Server → Client:** active-users, user-joined, element-added, element-updated, etc.
 
-- `join-project` - Join project room
-- `leave-project` - Leave project room
-- `element-add` - Add new element
-- `element-update` - Update element
-- `element-delete` - Delete element
-- `cursor-move` - Update cursor position
-- `selection-change` - Change selection
+---
 
-### Server → Client
-
-- `active-users` - Current users in project
-- `user-joined` - User joined project
-- `user-left` - User left project
-- `element-added` - Element was added
-- `element-updated` - Element was updated
-- `element-deleted` - Element was deleted
-- `cursor-moved` - User cursor moved
-
-## 🎯 Hackathon Focus Areas
-
-### ✅ Implemented (30-hour scope)
-
-- [x] Real-time collaboration with Socket.io
-- [x] High-performance PixiJS canvas
-- [x] User authentication and authorization
-- [x] Project management (CRUD)
-- [x] Basic design tools (shapes, text)
-- [x] Asset upload and management
-- [x] Properties panel
-- [x] Layer management
-- [x] Undo/Redo functionality
-- [x] Auto-save
-- [x] Responsive UI with Tailwind
-- [x] Live cursors and presence
-- [x] AI foundations (color suggestions)
-
-### 🚀 Future Enhancements
-
-- [ ] More shape tools (polygon, line, star)
-- [ ] Vector path editing
-- [ ] Advanced text formatting (bold, italic, alignment)
-- [ ] Grouping and ungrouping
-- [ ] Layer effects (shadows, blur)
-- [ ] Export to PNG/SVG/PDF
-- [ ] Templates library
-- [ ] Version history
-- [ ] Comments and annotations
-- [ ] Advanced AI features (design suggestions, auto-complete)
-- [ ] Integrations (Figma import, etc.)
-
-## 🔒 Security Features
-
-- JWT-based authentication
-- Password hashing with bcrypt
-- Helmet.js security headers
-- CORS configuration
-- File upload validation
-- Input sanitization
-- Protected API routes
-
-## 🎨 Design Decisions
-
-### Why PixiJS?
-
-- **Performance**: Hardware-accelerated rendering, 60fps even with hundreds of objects
-- **Flexibility**: Complete control over rendering pipeline
-- **Ecosystem**: Rich plugin ecosystem and community
-
-### Why Zustand?
-
-- **Simplicity**: Less boilerplate than Redux
-- **Performance**: Optimized re-renders
-- **Developer Experience**: Great TypeScript support and devtools
-
-### Why Socket.io?
-
-- **Reliability**: Automatic reconnection and fallbacks
-- **Room Support**: Easy multi-user room management
-- **Events**: Intuitive event-based communication
-
-## 🐛 Known Issues & Limitations
-
-- Text editing is basic (single-line, limited formatting)
-- No mobile support (desktop/tablet only)
-- Export functionality is placeholder
-- AI features are simplified for hackathon scope
-
-## 👥 Contributing
+## 👨‍💻 Contributing
 
 This project was built for the MERNIFY Hackathon. Contributions, issues, and feature requests are welcome!
 
-## 📝 License
+---
+
+## 📄 License
 
 MIT License - feel free to use this project for learning or building upon it!
 
-## 🙏 Acknowledgments
+---
+
+## ❤️ Acknowledgments
 
 - MERNIFY Hackathon organizers
 - PixiJS community
-- React and Node.js communities
-
-## 📞 Support
-
-For questions or issues, please open an issue on GitHub.
+- React & Node.js communities
 
 ---
 
