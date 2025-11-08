@@ -54,7 +54,8 @@ router.get("/pm-project/:pmProjectId", auth, async (req, res) => {
     // Check if user is team member
     const User = require("../models/User");
     const user = await User.findById(req.user._id);
-    if (!user.team || !user.team.equals(pmProject.team)) {
+    const teamId = pmProject.team._id || pmProject.team;
+    if (!user.teams || !user.teams.some((t) => t.equals(teamId))) {
       return res.status(403).json({ error: "Access denied" });
     }
 
@@ -97,7 +98,8 @@ router.post("/", auth, async (req, res) => {
     // Check if user is team member
     const User = require("../models/User");
     const user = await User.findById(req.user._id);
-    if (!user.team || !user.team.equals(pmProject.team)) {
+    const teamId = pmProject.team._id || pmProject.team;
+    if (!user.teams || !user.teams.some((t) => t.equals(teamId))) {
       return res.status(403).json({ error: "Access denied" });
     }
 
@@ -181,7 +183,8 @@ router.put("/:id", auth, async (req, res) => {
     const User = require("../models/User");
     const user = await User.findById(req.user._id);
     const pmProject = await PMProject.findById(task.pmProject);
-    if (!user.team || !user.team.equals(pmProject.team)) {
+    const teamId = pmProject.team._id || pmProject.team;
+    if (!user.teams || !user.teams.some((t) => t.equals(teamId))) {
       return res.status(403).json({ error: "Access denied" });
     }
 
@@ -240,7 +243,8 @@ router.delete("/:id", auth, async (req, res) => {
     const User = require("../models/User");
     const user = await User.findById(req.user._id);
     const pmProject = await PMProject.findById(task.pmProject);
-    if (!user.team || !user.team.equals(pmProject.team)) {
+    const teamId = pmProject.team._id || pmProject.team;
+    if (!user.teams || !user.teams.some((t) => t.equals(teamId))) {
       return res.status(403).json({ error: "Access denied" });
     }
 
@@ -297,7 +301,8 @@ router.patch("/:id/status", auth, async (req, res) => {
     const User = require("../models/User");
     const user = await User.findById(req.user._id);
     const pmProject = await PMProject.findById(task.pmProject);
-    if (!user.team || !user.team.equals(pmProject.team)) {
+    const teamId = pmProject.team._id || pmProject.team;
+    if (!user.teams || !user.teams.some((t) => t.equals(teamId))) {
       return res.status(403).json({ error: "Access denied" });
     }
 
@@ -346,14 +351,15 @@ router.patch("/:id/assignee", auth, async (req, res) => {
     const User = require("../models/User");
     const user = await User.findById(req.user._id);
     const pmProject = await PMProject.findById(task.pmProject);
-    if (!user.team || !user.team.equals(pmProject.team)) {
+    const teamId = pmProject.team._id || pmProject.team;
+    if (!user.teams || !user.teams.some((t) => t.equals(teamId))) {
       return res.status(403).json({ error: "Access denied" });
     }
 
     // Verify assignee is team member if provided
     if (assigneeId) {
       const assignee = await User.findById(assigneeId);
-      if (!assignee || !assignee.team || !assignee.team.equals(pmProject.team)) {
+      if (!assignee || !assignee.teams || !assignee.teams.some((t) => t.equals(teamId))) {
         return res.status(400).json({ error: "Assignee must be a team member" });
       }
     }

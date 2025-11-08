@@ -34,11 +34,12 @@ const teamSchema = new mongoose.Schema(
         },
       },
     ],
-    pmProject: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "PMProject",
-      default: null,
-    },
+    pmProjects: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "PMProject",
+      },
+    ],
   },
   {
     timestamps: true,

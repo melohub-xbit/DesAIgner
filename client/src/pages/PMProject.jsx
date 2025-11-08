@@ -229,31 +229,38 @@ const PMProject = () => {
                   <p className="text-gray-400">No tasks found</p>
                 </CardSpotlight>
               ) : (
-                filteredTasks.map((task) => (
-                  <div key={task._id}>
-                    <TaskCard
-                      task={task}
-                      onEdit={handleEditTask}
-                      onDelete={handleDeleteTask}
-                      onCreateSubtask={handleCreateSubtask}
-                    />
-                    {/* Render subtasks */}
-                    {task.subtasks && task.subtasks.length > 0 && (
-                      <div className="mt-2 ml-6 space-y-2">
-                        {task.subtasks.map((subtask) => (
-                          <TaskCard
-                            key={subtask._id}
-                            task={subtask}
-                            onEdit={handleEditTask}
-                            onDelete={handleDeleteTask}
-                            onCreateSubtask={handleCreateSubtask}
-                            level={1}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))
+                filteredTasks.map((task, index) => {
+                  const taskKey = task._id || task.id || `task-${index}`;
+                  return (
+                    <div key={taskKey}>
+                      <TaskCard
+                        key={taskKey}
+                        task={task}
+                        onEdit={handleEditTask}
+                        onDelete={handleDeleteTask}
+                        onCreateSubtask={handleCreateSubtask}
+                      />
+                      {/* Render subtasks */}
+                      {task.subtasks && task.subtasks.length > 0 && (
+                        <div className="mt-2 ml-6 space-y-2">
+                          {task.subtasks.map((subtask, subIndex) => {
+                            const subtaskKey = subtask._id || subtask.id || `subtask-${taskKey}-${subIndex}`;
+                            return (
+                              <TaskCard
+                                key={subtaskKey}
+                                task={subtask}
+                                onEdit={handleEditTask}
+                                onDelete={handleDeleteTask}
+                                onCreateSubtask={handleCreateSubtask}
+                                level={1}
+                              />
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>

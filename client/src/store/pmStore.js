@@ -17,13 +17,15 @@ export const usePMStore = create((set, get) => ({
   setLoading: (loading) => set({ loading }),
   setActivePMUsers: (users) => set({ activePMUsers: users }),
 
-  // Fetch team
+  // Fetch team (gets first team for now, can be extended to support team selection)
   fetchTeam: async () => {
     try {
       set({ loading: true });
       const { data } = await teamsAPI.getMyTeam();
-      set({ team: data.team, loading: false });
-      return data.team;
+      // Handle both old format (team) and new format (teams array)
+      const team = data.teams && data.teams.length > 0 ? data.teams[0] : (data.team || null);
+      set({ team, loading: false });
+      return team;
     } catch (error) {
       console.error("Fetch team error:", error);
       set({ loading: false });
@@ -91,7 +93,11 @@ export const usePMStore = create((set, get) => ({
       set({ pmProject: data.pmProject, loading: false });
       // Update team with PM project reference
       if (get().team) {
-        set({ team: { ...get().team, pmProject: data.pmProject._id } });
+        const currentTeam = get().team;
+        const pmProjects = currentTeam.pmProjects || [];
+        if (!pmProjects.some((p) => p._id === data.pmProject._id || p === data.pmProject._id)) {
+          set({ team: { ...currentTeam, pmProjects: [...pmProjects, data.pmProject._id] } });
+        }
       }
       return data.pmProject;
     } catch (error) {

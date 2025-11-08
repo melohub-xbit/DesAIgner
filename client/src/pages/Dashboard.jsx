@@ -524,18 +524,22 @@ const Dashboard = () => {
                       Project Management
                     </h3>
                     <p className="text-sm text-gray-400">
-                      {team.pmProject
+                      {team.pmProjects && team.pmProjects.length > 0
                         ? "Manage your team's tasks and track progress"
                         : "Create a PM project to start managing tasks"}
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  {team.pmProject ? (
+                  {team.pmProjects && team.pmProjects.length > 0 ? (
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => navigate(`/pm-projects/${team.pmProject}`)}
+                      onClick={() => {
+                        const firstPMProject = team.pmProjects[0];
+                        const pmProjectId = firstPMProject._id || firstPMProject;
+                        navigate(`/pm-projects/${pmProjectId}`);
+                      }}
                       className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-2xl hover:shadow-purple-500/50 text-white rounded-xl transition-all duration-300 font-medium"
                     >
                       View PM Project

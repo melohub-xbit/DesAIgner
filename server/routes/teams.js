@@ -7,24 +7,24 @@ const PMProject = require("../models/PMProject");
 const Project = require("../models/Project");
 
 // ========================
-// Get user's team
+// Get user's teams
 // ========================
 router.get("/", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate("team");
-    if (!user.team) {
-      return res.json({ team: null });
+    const user = await User.findById(req.user._id).populate("teams");
+    if (!user.teams || user.teams.length === 0) {
+      return res.json({ teams: [] });
     }
 
-    const team = await Team.findById(user.team)
+    const teams = await Team.find({ _id: { $in: user.teams } })
       .populate("owner", "username email avatar")
       .populate("members.user", "username email avatar")
-      .populate("pmProject");
+      .populate("pmProjects");
 
-    res.json({ team });
+    res.json({ teams });
   } catch (error) {
-    console.error("Get team error:", error);
-    res.status(500).json({ error: "Failed to fetch team" });
+    console.error("Get teams error:", error);
+    res.status(500).json({ error: "Failed to fetch teams" });
   }
 });
 
@@ -35,11 +35,7 @@ router.post("/", auth, async (req, res) => {
   try {
     const { name, description } = req.body;
 
-    // Check if user already has a team
     const user = await User.findById(req.user._id);
-    if (user.team) {
-      return res.status(400).json({ error: "User already belongs to a team" });
-    }
 
     const team = new Team({
       name,
@@ -55,8 +51,11 @@ router.post("/", auth, async (req, res) => {
 
     await team.save();
 
-    // Update user's team reference
-    user.team = team._id;
+    // Add team to user's teams array
+    if (!user.teams) {
+      user.teams = [];
+    }
+    user.teams.push(team._id);
     await user.save();
 
     await team.populate([
@@ -79,7 +78,7 @@ router.get("/:id", auth, async (req, res) => {
     const team = await Team.findById(req.params.id)
       .populate("owner", "username email avatar")
       .populate("members.user", "username email avatar")
-      .populate("pmProject");
+      .populate("pmProjects");
 
     if (!team) {
       return res.status(404).json({ error: "Team not found" });
@@ -167,11 +166,6 @@ router.post("/:id/members", auth, async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Check if user already has a team
-    if (newMember.team) {
-      return res.status(400).json({ error: "User already belongs to a team" });
-    }
-
     // Check if already a member
     const alreadyMember = team.members.some((m) =>
       m.user.equals(newMember._id)
@@ -187,9 +181,14 @@ router.post("/:id/members", auth, async (req, res) => {
 
     await team.save();
 
-    // Update user's team reference
-    newMember.team = team._id;
-    await newMember.save();
+    // Add team to user's teams array if not already present
+    if (!newMember.teams) {
+      newMember.teams = [];
+    }
+    if (!newMember.teams.some((t) => t.equals(team._id))) {
+      newMember.teams.push(team._id);
+      await newMember.save();
+    }
 
     await team.populate([
       { path: "owner", select: "username email avatar" },
@@ -240,8 +239,14 @@ router.delete("/:id/members/:memberId", auth, async (req, res) => {
     team.members.splice(memberIndex, 1);
     await team.save();
 
-    // Remove team reference from user
-    await User.findByIdAndUpdate(req.params.memberId, { team: null });
+    // Remove team reference from user's teams array
+    const memberUser = await User.findById(req.params.memberId);
+    if (memberUser && memberUser.teams) {
+      memberUser.teams = memberUser.teams.filter(
+        (t) => !t.equals(team._id)
+      );
+      await memberUser.save();
+    }
 
     await team.populate([
       { path: "owner", select: "username email avatar" },
@@ -275,11 +280,6 @@ router.post("/:id/pm-project", auth, async (req, res) => {
 
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ error: "Access denied" });
-    }
-
-    // Check if team already has a PM project
-    if (team.pmProject) {
-      return res.status(400).json({ error: "Team already has a PM project" });
     }
 
     // Verify design project exists and user has access
@@ -319,8 +319,11 @@ router.post("/:id/pm-project", auth, async (req, res) => {
 
     await pmProject.save();
 
-    // Update team's PM project reference
-    team.pmProject = pmProject._id;
+    // Add PM project to team's pmProjects array
+    if (!team.pmProjects) {
+      team.pmProjects = [];
+    }
+    team.pmProjects.push(pmProject._id);
     await team.save();
 
     await pmProject.populate([

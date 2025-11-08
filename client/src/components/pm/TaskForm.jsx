@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Save } from "lucide-react";
 import { usePMStore } from "../../store/pmStore";
+import socketService from "../../utils/socket";
 
 const TaskForm = ({ task, onClose, pmProjectId, parentTaskId }) => {
   const createTask = usePMStore((state) => state.createTask);
@@ -52,9 +53,8 @@ const TaskForm = ({ task, onClose, pmProjectId, parentTaskId }) => {
       } else {
         await createTask(taskData);
         // Emit socket event for real-time update
-        const socket = require("../../utils/socket").default;
-        if (socket.socket && pmProject) {
-          socket.socket.emit("task-create", {
+        if (socketService.socket && pmProject) {
+          socketService.socket.emit("task-create", {
             pmProjectId: pmProject._id,
             task: { ...taskData, _id: Date.now().toString() },
           });
@@ -78,7 +78,7 @@ const TaskForm = ({ task, onClose, pmProjectId, parentTaskId }) => {
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="relative w-full max-w-md bg-black border border-white/20 rounded-3xl p-6"
+          className="relative w-full max-w-md bg-gray-900 border border-white/20 rounded-3xl p-6"
         >
           {/* Glow Effect */}
           <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-3xl blur-xl opacity-75" />
@@ -108,7 +108,7 @@ const TaskForm = ({ task, onClose, pmProjectId, parentTaskId }) => {
                     setFormData({ ...formData, title: e.target.value })
                   }
                   required
-                  className="w-full px-4 py-2.5 bg-white/5 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  className="w-full px-4 py-2.5 bg-gray-800 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
                   placeholder="Task title"
                 />
               </div>
@@ -123,7 +123,7 @@ const TaskForm = ({ task, onClose, pmProjectId, parentTaskId }) => {
                     setFormData({ ...formData, description: e.target.value })
                   }
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-white/5 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all resize-none"
+                  className="w-full px-4 py-2.5 bg-gray-800 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all resize-none"
                   placeholder="Task description"
                 />
               </div>
@@ -138,12 +138,12 @@ const TaskForm = ({ task, onClose, pmProjectId, parentTaskId }) => {
                     onChange={(e) =>
                       setFormData({ ...formData, priority: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 bg-white/5 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    className="w-full px-4 py-2.5 bg-gray-800 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
                   >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
+                    <option value="low" className="bg-gray-800 text-white">Low</option>
+                    <option value="medium" className="bg-gray-800 text-white">Medium</option>
+                    <option value="high" className="bg-gray-800 text-white">High</option>
+                    <option value="urgent" className="bg-gray-800 text-white">Urgent</option>
                   </select>
                 </div>
 
@@ -156,11 +156,11 @@ const TaskForm = ({ task, onClose, pmProjectId, parentTaskId }) => {
                     onChange={(e) =>
                       setFormData({ ...formData, assigneeId: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 bg-white/5 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    className="w-full px-4 py-2.5 bg-gray-800 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
                   >
-                    <option value="">Unassigned</option>
+                    <option value="" className="bg-gray-800 text-white">Unassigned</option>
                     {teamMembers.map((member) => (
-                      <option key={member.user._id} value={member.user._id}>
+                      <option key={member.user._id} value={member.user._id} className="bg-gray-800 text-white">
                         {member.user.username}
                       </option>
                     ))}
@@ -178,7 +178,7 @@ const TaskForm = ({ task, onClose, pmProjectId, parentTaskId }) => {
                   onChange={(e) =>
                     setFormData({ ...formData, dueDate: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 bg-white/5 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  className="w-full px-4 py-2.5 bg-gray-800 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
                 />
               </div>
 

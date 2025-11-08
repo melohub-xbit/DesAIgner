@@ -32,11 +32,12 @@ const userSchema = new mongoose.Schema(
         ref: "Project",
       },
     ],
-    team: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Team",
-      default: null,
-    },
+    teams: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Team",
+      },
+    ],
   },
   {
     timestamps: true,

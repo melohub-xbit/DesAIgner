@@ -57,8 +57,10 @@ const PMDashboard = () => {
 
   const loadData = async () => {
     await fetchTeam();
-    if (team?.pmProject) {
-      await fetchPMProject(team.pmProject);
+    if (team?.pmProjects && team.pmProjects.length > 0) {
+      const firstPMProject = team.pmProjects[0];
+      const pmProjectId = firstPMProject._id || firstPMProject;
+      await fetchPMProject(pmProjectId);
     }
   };
 

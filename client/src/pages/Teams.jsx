@@ -118,11 +118,13 @@ const Teams = () => {
         return;
       }
 
-      await createPMProject(team._id, formData.designProjectId);
+      const pmProject = await createPMProject(team._id, formData.designProjectId);
       toast.success("PM project created successfully!");
       setShowPMProjectModal(false);
       setFormData({ ...formData, designProjectId: "" });
-      navigate(`/pm-projects/${team.pmProject}`);
+      if (pmProject?._id) {
+        navigate(`/pm-projects/${pmProject._id}`);
+      }
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to create PM project");
     }
@@ -226,37 +228,44 @@ const Teams = () => {
                       <UserPlus className="w-4 h-4" />
                       Invite Member
                     </motion.button>
-                    {!team.pmProject && (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          loadDesignProjects();
-                          setShowPMProjectModal(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-purple-600 hover:shadow-2xl hover:shadow-purple-500/50 text-white rounded-full transition-all duration-300"
-                      >
-                        <Palette className="w-4 h-4" />
-                        Create PM Project
-                      </motion.button>
-                    )}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        loadDesignProjects();
+                        setShowPMProjectModal(true);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-purple-600 hover:shadow-2xl hover:shadow-purple-500/50 text-white rounded-full transition-all duration-300"
+                    >
+                      <Palette className="w-4 h-4" />
+                      Create PM Project
+                    </motion.button>
                   </div>
                 )}
               </div>
 
               <TeamMembers team={team} />
 
-              {team.pmProject && (
+              {team.pmProjects && team.pmProjects.length > 0 && (
                 <div className="mt-6 pt-6 border-t border-white/10">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate(`/pm-projects/${team.pmProject}`)}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-600 to-purple-600 hover:shadow-2xl hover:shadow-purple-500/50 text-white rounded-xl transition-all duration-300 font-medium"
-                  >
-                    <Palette className="w-4 h-4" />
-                    View PM Project
-                  </motion.button>
+                  <h3 className="text-lg font-semibold text-white mb-3">PM Projects</h3>
+                  <div className="space-y-2">
+                    {team.pmProjects.map((pmProj) => {
+                      const pmProjectId = pmProj._id || pmProj;
+                      return (
+                        <motion.button
+                          key={pmProjectId}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => navigate(`/pm-projects/${pmProjectId}`)}
+                          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-600/20 to-purple-600/20 hover:from-cyan-600/30 hover:to-purple-600/30 backdrop-blur-sm border border-cyan-500/30 hover:border-cyan-500/50 text-white rounded-xl transition-all duration-300 font-medium"
+                        >
+                          <Palette className="w-4 h-4" />
+                          {typeof pmProj === 'object' && pmProj.name ? pmProj.name : `View PM Project`}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </CardSpotlight>
@@ -358,10 +367,10 @@ const Teams = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, role: e.target.value })
                 }
-                className="w-full px-4 py-2.5 bg-white/5 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                className="w-full px-4 py-2.5 bg-gray-800 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
               >
-                <option value="member">Member</option>
-                <option value="admin">Admin</option>
+                <option value="member" className="bg-gray-800 text-white">Member</option>
+                <option value="admin" className="bg-gray-800 text-white">Admin</option>
               </select>
             </div>
             <div className="flex gap-3 pt-2">
@@ -408,11 +417,11 @@ const Teams = () => {
                     setFormData({ ...formData, designProjectId: e.target.value })
                   }
                   required
-                  className="w-full px-4 py-2.5 bg-white/5 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  className="w-full px-4 py-2.5 bg-gray-800 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
                 >
-                  <option value="">Select a design project</option>
+                  <option value="" className="bg-gray-800 text-white">Select a design project</option>
                   {designProjects.map((project) => (
-                    <option key={project._id} value={project._id}>
+                    <option key={project._id} value={project._id} className="bg-gray-800 text-white">
                       {project.name}
                     </option>
                   ))}

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { usePMStore } from "../../store/pmStore";
+import socketService from "../../utils/socket";
 
 const statusColors = {
   todo: "text-gray-400",
@@ -36,9 +37,8 @@ const TaskCard = ({ task, onEdit, onDelete, onCreateSubtask, level = 0 }) => {
     try {
       await updateTaskStatus(task._id, newStatus);
       // Emit socket event for real-time update
-      const socket = require("../../utils/socket").default;
-      if (socket.socket && pmProject) {
-        socket.socket.emit("task-status-change", {
+      if (socketService.socket && pmProject) {
+        socketService.socket.emit("task-status-change", {
           pmProjectId: pmProject._id,
           taskId: task._id,
           status: newStatus,
@@ -117,11 +117,13 @@ const TaskCard = ({ task, onEdit, onDelete, onCreateSubtask, level = 0 }) => {
                 </span>
 
                 {/* Status */}
-                <span
-                  className={`flex items-center gap-1 ${statusColors[task.status]}`}
-                >
-                  {task.status.replace("-", " ")}
-                </span>
+                {task.status && (
+                  <span
+                    className={`flex items-center gap-1 ${statusColors[task.status] || statusColors.todo}`}
+                  >
+                    {task.status.replace("-", " ")}
+                  </span>
+                )}
 
                 {/* Due Date */}
                 {task.dueDate && (

@@ -6,28 +6,37 @@ const Team = require("../models/Team");
 const Task = require("../models/Task");
 
 // ========================
-// Get user's PM projects (via team)
+// Get user's PM projects (via teams)
 // ========================
 router.get("/", auth, async (req, res) => {
   try {
     const User = require("../models/User");
-    const user = await User.findById(req.user._id).populate("team");
+    const user = await User.findById(req.user._id).populate("teams");
 
-    if (!user.team) {
+    if (!user.teams || user.teams.length === 0) {
       return res.json({ pmProjects: [] });
     }
 
-    const team = await Team.findById(user.team).populate("pmProject");
-    if (!team.pmProject) {
+    const teams = await Team.find({ _id: { $in: user.teams } }).populate("pmProjects");
+    
+    // Collect all PM projects from all teams
+    const pmProjectIds = [];
+    teams.forEach((team) => {
+      if (team.pmProjects && team.pmProjects.length > 0) {
+        pmProjectIds.push(...team.pmProjects);
+      }
+    });
+
+    if (pmProjectIds.length === 0) {
       return res.json({ pmProjects: [] });
     }
 
-    const pmProject = await PMProject.findById(team.pmProject)
+    const pmProjects = await PMProject.find({ _id: { $in: pmProjectIds } })
       .populate("designProject", "name description thumbnail")
       .populate("team", "name owner members")
       .populate("tasks");
 
-    res.json({ pmProjects: [pmProject] });
+    res.json({ pmProjects });
   } catch (error) {
     console.error("Get PM projects error:", error);
     res.status(500).json({ error: "Failed to fetch PM projects" });
@@ -58,7 +67,8 @@ router.get("/:id", auth, async (req, res) => {
     // Check if user is team member
     const User = require("../models/User");
     const user = await User.findById(req.user._id);
-    if (!user.team || !user.team.equals(pmProject.team._id)) {
+    const teamId = pmProject.team._id || pmProject.team;
+    if (!user.teams || !user.teams.some((t) => t.equals(teamId))) {
       return res.status(403).json({ error: "Access denied" });
     }
 
@@ -84,7 +94,8 @@ router.put("/:id", auth, async (req, res) => {
     // Check if user is team member
     const User = require("../models/User");
     const user = await User.findById(req.user._id);
-    if (!user.team || !user.team.equals(pmProject.team)) {
+    const teamId = pmProject.team._id || pmProject.team;
+    if (!user.teams || !user.teams.some((t) => t.equals(teamId))) {
       return res.status(403).json({ error: "Access denied" });
     }
 

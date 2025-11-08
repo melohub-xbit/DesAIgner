@@ -4,34 +4,63 @@ import { User, Crown, Shield } from "lucide-react";
 const TeamMembers = ({ team }) => {
   if (!team) return null;
 
-  const members = [
-    {
-      user: team.owner,
-      role: "owner",
-    },
-    ...(team.members || []),
-  ];
+  // Consolidate members - group by user and collect all roles
+  const memberMap = new Map();
 
-  const getRoleIcon = (role) => {
-    switch (role) {
-      case "owner":
-        return <Crown className="w-4 h-4 text-yellow-400" />;
-      case "admin":
-        return <Shield className="w-4 h-4 text-purple-400" />;
-      default:
-        return <User className="w-4 h-4 text-gray-400" />;
+  // Add owner
+  if (team.owner) {
+    const ownerId = team.owner._id || team.owner;
+    memberMap.set(ownerId.toString(), {
+      user: team.owner,
+      roles: ["owner"],
+    });
+  }
+
+  // Add other members
+  if (team.members && team.members.length > 0) {
+    team.members.forEach((member) => {
+      const userId = member.user._id || member.user;
+      const userIdStr = userId.toString();
+      
+      if (memberMap.has(userIdStr)) {
+        // User already exists (as owner), add additional role if different
+        const existing = memberMap.get(userIdStr);
+        if (member.role && !existing.roles.includes(member.role)) {
+          existing.roles.push(member.role);
+        }
+      } else {
+        // New member
+        memberMap.set(userIdStr, {
+          user: member.user,
+          roles: [member.role || "member"],
+        });
+      }
+    });
+  }
+
+  const members = Array.from(memberMap.values());
+
+  const getRoleIcon = (roles) => {
+    if (roles.includes("owner")) {
+      return <Crown className="w-4 h-4 text-yellow-400" />;
     }
+    if (roles.includes("admin")) {
+      return <Shield className="w-4 h-4 text-purple-400" />;
+    }
+    return <User className="w-4 h-4 text-gray-400" />;
   };
 
-  const getRoleLabel = (role) => {
-    switch (role) {
-      case "owner":
-        return "Owner";
-      case "admin":
-        return "Admin";
-      default:
-        return "Member";
-    }
+  const getRoleLabels = (roles) => {
+    return roles.map((role) => {
+      switch (role) {
+        case "owner":
+          return "Owner";
+        case "admin":
+          return "Admin";
+        default:
+          return "Member";
+      }
+    }).join(", ");
   };
 
   return (
@@ -54,8 +83,8 @@ const TeamMembers = ({ team }) => {
               <p className="text-xs text-gray-400">{member.user.email}</p>
             </div>
             <div className="flex items-center gap-2 text-xs">
-              {getRoleIcon(member.role)}
-              <span className="text-gray-400">{getRoleLabel(member.role)}</span>
+              {getRoleIcon(member.roles)}
+              <span className="text-gray-400">{getRoleLabels(member.roles)}</span>
             </div>
           </motion.div>
         ))}

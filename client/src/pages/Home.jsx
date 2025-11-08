@@ -7,7 +7,7 @@ import { CanvasRevealEffect, Card } from "../components/ui/CanvasRevealEffect";
 import { CardSpotlight } from "../components/ui/CardSpotlight";
 import { EvervaultCard } from "../components/ui/EvervaultCard";
 import { TextHoverEffect } from "../components/ui/TextHoverEffect";
-import { Sparkles, Zap, Users, ArrowRight, Palette, Info, Globe } from "lucide-react";
+import { Sparkles, Zap, Users, ArrowRight, Palette, Info, Globe, CheckSquare, BarChart3 } from "lucide-react";
 
 const Home = () => {
   return (
@@ -99,7 +99,7 @@ const Home = () => {
               Design collaboratively in real-time with the power of AI.
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
-                Create. Collaborate. Innovate.
+                Create. Collaborate. Innovate. Manage.
               </span>
             </motion.p>
 
@@ -154,12 +154,12 @@ const Home = () => {
               why des-ai-gner?
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              The only design tool you'll ever need
+              The only design tool you'll ever need - with integrated project management
             </p>
           </motion.div>
 
           {/* Canvas Reveal Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -218,6 +218,105 @@ const Home = () => {
                   dotSize={2}
                 />
               </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.8 }}
+            >
+              <Card
+                title="project management"
+                icon={<CheckSquare className="w-16 h-16 text-green-500" />}
+                description="Manage your design projects with integrated task tracking, team collaboration, and progress monitoring."
+              >
+                <CanvasRevealEffect
+                  animationSpeed={3}
+                  containerClassName="bg-black"
+                  colors={[[34, 197, 94]]}
+                  dotSize={2}
+                />
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Project Management Features Section */}
+      <section className="py-32 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-green-950/10 to-black" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="font-heading text-5xl md:text-6xl font-normal mb-6 bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-cyan-500 to-blue-600">
+              integrated project management
+            </h2>
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              Keep your design projects organized with powerful project management tools built right in
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <CardSpotlight className="bg-black/40 h-full">
+                <div className="p-6">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-green-500/20 to-cyan-500/20 flex items-center justify-center mb-4">
+                    <CheckSquare className="w-6 h-6 text-green-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3">Task Management</h3>
+                  <p className="text-gray-400">
+                    Create, assign, and track tasks for your design projects. Organize work with priorities, due dates, and subtasks.
+                  </p>
+                </div>
+              </CardSpotlight>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+            >
+              <CardSpotlight className="bg-black/40 h-full">
+                <div className="p-6">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-4">
+                    <Users className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3">Team Collaboration</h3>
+                  <p className="text-gray-400">
+                    Work with multiple teams on different projects. Invite members, assign roles, and collaborate seamlessly.
+                  </p>
+                </div>
+              </CardSpotlight>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.6 }}
+            >
+              <CardSpotlight className="bg-black/40 h-full">
+                <div className="p-6">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500/20 to-cyan-500/20 flex items-center justify-center mb-4">
+                    <BarChart3 className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3">Progress Tracking</h3>
+                  <p className="text-gray-400">
+                    Monitor project progress with real-time updates, visual charts, and detailed analytics. Stay on top of deadlines.
+                  </p>
+                </div>
+              </CardSpotlight>
             </motion.div>
           </div>
         </div>
