@@ -27,9 +27,8 @@ Built for the MERNIFY Hackathon - A modern, performant design tool enabling team
 - **Real-time Sync**: All changes sync instantly across all connected users
 - **Collaborative Editing**: Multiple users can edit different elements simultaneously
 
-### AI-Powered Features
+### AI-Powered Features (Foundation)
 
-- **Gemini Layout Assistant**: Generate ready-to-use layouts with Google Gemini
 - **Color Suggestions**: AI-powered color palette generation
 - **Layout Suggestions**: Smart layout recommendations
 - **Auto-alignment**: Intelligent element alignment
@@ -108,8 +107,7 @@ cp .env.example .env
 # Edit .env and add your values:
 # - MongoDB connection string
 # - JWT secret
-# - Google Gemini API key (from AI Studio)
-# - Optional: override GEMINI_MODEL if you prefer a different Gemini release
+# - Optional: OpenAI API key for AI features
 ```
 
 5. **Start MongoDB** (if not already running)
@@ -252,10 +250,7 @@ npm run preview      # Preview production build
 
 ### AI
 
-- `POST /api/ai/design` - Generate a Gemini-powered layout
-- `POST /api/ai/suggest-colors` - Get color suggestions
-- `POST /api/ai/suggest-layout` - Get layout suggestions
-- `POST /api/ai/auto-align` - Auto-align elements
+- `POST /api/ai/create-design` - Generate multi-element layouts with Gemini
 
 ## 🔌 Socket Events
 

@@ -68,8 +68,5 @@ export const assetsAPI = {
 };
 
 export const aiAPI = {
-  generateDesign: (data) => api.post("/ai/design", data),
-  suggestColors: (data) => api.post("/ai/suggest-colors", data),
-  suggestLayout: (data) => api.post("/ai/suggest-layout", data),
-  autoAlign: (data) => api.post("/ai/auto-align", data),
+  createDesign: (data) => api.post("/ai/create-design", data),
 };

@@ -35,20 +35,24 @@ export const useEditorStore = create((set, get) => ({
     get().saveHistory();
   },
 
-  addElementsBatch: (elementsToAdd) => {
-    const { elements } = get();
-    const additions = Array.isArray(elementsToAdd)
-      ? elementsToAdd.filter(Boolean)
-      : [];
-
-    if (additions.length === 0) {
-      return elements;
+  addElementsBatch: (newElements) => {
+    if (!Array.isArray(newElements) || newElements.length === 0) {
+      return;
     }
 
-    const nextElements = [...elements, ...additions];
-    set({ elements: nextElements });
+    const sanitized = newElements.filter(Boolean);
+    if (sanitized.length === 0) {
+      return;
+    }
+
+    const { elements } = get();
+    set({
+      elements: [...elements, ...sanitized],
+      selectedIds: sanitized
+        .map((element) => element?.id)
+        .filter((id) => typeof id === "string" && id.length > 0),
+    });
     get().saveHistory();
-    return nextElements;
   },
 
   updateElement: (id, updates) => {

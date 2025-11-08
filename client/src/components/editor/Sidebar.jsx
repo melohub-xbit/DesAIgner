@@ -20,6 +20,7 @@ import { useEditorStore } from "../../store/editorStore";
 import { useDropzone } from "react-dropzone";
 import { assetsAPI } from "../../utils/api";
 import toast from "react-hot-toast";
+import AssistantPanel from "./AssistantPanel";
 
 const Sidebar = ({ projectId }) => {
   const [activeTab, setActiveTab] = useState("layers");
@@ -174,6 +175,7 @@ const Sidebar = ({ projectId }) => {
   };
 
   const tabs = [
+    { id: "assistant", icon: Sparkles, label: "Assistant" },
     { id: "layers", icon: Layers, label: "Layers" },
     { id: "assets", icon: Upload, label: "Assets" },
   ];
@@ -182,21 +184,21 @@ const Sidebar = ({ projectId }) => {
     <motion.div
       ref={sidebarRef}
       initial={{ x: -20, opacity: 0 }}
-      animate={{ 
-        x: 0, 
+      animate={{
+        x: 0,
         opacity: 1,
-        width: isCollapsed ? "48px" : `${width}px`
+        width: isCollapsed ? "48px" : `${width}px`,
       }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className="bg-black/90 backdrop-blur-xl border-r border-white/10 flex flex-col relative shrink-0 h-full shadow-2xl"
     >
       {/* Gradient overlay */}
-      <motion.div 
+      <motion.div
         animate={{ opacity: isCollapsed ? 0 : 1 }}
         transition={{ duration: 0.2 }}
-        className="absolute inset-0 bg-gradient-to-br from-cyan-950/20 via-transparent to-purple-950/20 pointer-events-none" 
+        className="absolute inset-0 bg-gradient-to-br from-cyan-950/20 via-transparent to-purple-950/20 pointer-events-none"
       />
-      
+
       {/* Collapsed state vertical text */}
       <AnimatePresence>
         {isCollapsed && (
@@ -207,36 +209,29 @@ const Sidebar = ({ projectId }) => {
             transition={{ delay: 0.2 }}
             className="absolute inset-0 flex flex-col items-center justify-center gap-6 z-10"
           >
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              className="flex flex-col items-center gap-2 cursor-pointer group"
-              onClick={() => setIsCollapsed(false)}
-            >
-              <Layers className="w-5 h-5 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
-              <div className="writing-mode-vertical text-xs font-medium text-gray-400 group-hover:text-white transition-colors tracking-wider">
-                LAYERS
-              </div>
-            </motion.div>
-            
-            <div className="w-6 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-            
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              className="flex flex-col items-center gap-2 cursor-pointer group"
-              onClick={() => {
-                setIsCollapsed(false);
-                setActiveTab("assets");
-              }}
-            >
-              <Upload className="w-5 h-5 text-purple-400 group-hover:text-purple-300 transition-colors" />
-              <div className="writing-mode-vertical text-xs font-medium text-gray-400 group-hover:text-white transition-colors tracking-wider">
-                ASSETS
-              </div>
-            </motion.div>
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <motion.div
+                  key={tab.id}
+                  whileHover={{ scale: 1.1 }}
+                  className="flex flex-col items-center gap-2 cursor-pointer group"
+                  onClick={() => {
+                    setIsCollapsed(false);
+                    setActiveTab(tab.id);
+                  }}
+                >
+                  <Icon className="w-5 h-5 text-cyan-300 group-hover:text-white transition-colors" />
+                  <div className="writing-mode-vertical text-xs font-medium text-gray-400 group-hover:text-white transition-colors tracking-wider">
+                    {tab.label.toUpperCase()}
+                  </div>
+                </motion.div>
+              );
+            })}
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       {/* Collapse/Expand Button */}
       <motion.button
         whileHover={{ scale: 1.1, rotate: isCollapsed ? 0 : 5 }}
@@ -283,11 +278,17 @@ const Sidebar = ({ projectId }) => {
                       <motion.div
                         layoutId="activeTab"
                         className="absolute inset-0 bg-gradient-to-r from-cyan-600/20 to-purple-600/20 border-b-2 border-cyan-500"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        transition={{
+                          type: "spring",
+                          bounce: 0.2,
+                          duration: 0.6,
+                        }}
                       />
                     )}
                     <Icon className="w-4 h-4 relative z-10" />
-                    <span className="text-sm font-medium relative z-10">{tab.label}</span>
+                    <span className="text-sm font-medium relative z-10">
+                      {tab.label}
+                    </span>
                   </motion.button>
                 );
               })}
@@ -296,6 +297,18 @@ const Sidebar = ({ projectId }) => {
             {/* Tab content */}
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
               <AnimatePresence mode="wait">
+                {activeTab === "assistant" && (
+                  <motion.div
+                    key="assistant"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="h-full"
+                  >
+                    <AssistantPanel projectId={projectId} />
+                  </motion.div>
+                )}
                 {activeTab === "layers" && (
                   <motion.div
                     key="layers"
@@ -310,7 +323,7 @@ const Sidebar = ({ projectId }) => {
                       <h3 className="text-white font-semibold">Layers</h3>
                       <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
                     </div>
-                    
+
                     {elements.length === 0 ? (
                       <div className="text-center py-12">
                         <div className="relative inline-block mb-4">
@@ -318,7 +331,9 @@ const Sidebar = ({ projectId }) => {
                           <Layers className="relative w-12 h-12 text-gray-600" />
                         </div>
                         <p className="text-gray-500 text-sm">No elements yet</p>
-                        <p className="text-gray-600 text-xs mt-1">Start creating!</p>
+                        <p className="text-gray-600 text-xs mt-1">
+                          Start creating!
+                        </p>
                       </div>
                     ) : (
                       <div className="space-y-2">
@@ -338,27 +353,33 @@ const Sidebar = ({ projectId }) => {
                             {selectedIds.includes(element.id) && (
                               <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-xl blur" />
                             )}
-                            
+
                             <div className="relative flex items-center justify-between gap-2">
                               <div
                                 className="flex-1 cursor-pointer"
                                 onClick={() => selectElement(element.id)}
                               >
                                 <div className="flex items-center justify-between">
-                                  <span className={`text-sm truncate font-medium ${
-                                    selectedIds.includes(element.id) ? "text-white" : "text-gray-300"
-                                  }`}>
+                                  <span
+                                    className={`text-sm truncate font-medium ${
+                                      selectedIds.includes(element.id)
+                                        ? "text-white"
+                                        : "text-gray-300"
+                                    }`}
+                                  >
                                     {element.name ||
                                       (element.type === "text"
                                         ? element.text || "Text"
                                         : element.type.charAt(0).toUpperCase() +
                                           element.type.slice(1))}
                                   </span>
-                                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                    selectedIds.includes(element.id)
-                                      ? "bg-cyan-500/20 text-cyan-300"
-                                      : "bg-black/60 text-gray-400"
-                                  }`}>
+                                  <span
+                                    className={`text-xs px-2 py-0.5 rounded-full ${
+                                      selectedIds.includes(element.id)
+                                        ? "bg-cyan-500/20 text-cyan-300"
+                                        : "bg-black/60 text-gray-400"
+                                    }`}
+                                  >
                                     {element.type}
                                   </span>
                                 </div>
@@ -433,7 +454,7 @@ const Sidebar = ({ projectId }) => {
                       }`}
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-pink-500/5 opacity-0 hover:opacity-100 transition-opacity" />
-                      
+
                       <input {...getInputProps()} />
                       <motion.div
                         animate={isDragActive ? { scale: 1.1 } : { scale: 1 }}
@@ -443,9 +464,11 @@ const Sidebar = ({ projectId }) => {
                           <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full blur-lg opacity-30" />
                           <Upload className="relative w-10 h-10 text-cyan-400" />
                         </div>
-                        <p className={`text-sm font-medium ${
-                          isDragActive ? "text-cyan-300" : "text-gray-300"
-                        }`}>
+                        <p
+                          className={`text-sm font-medium ${
+                            isDragActive ? "text-cyan-300" : "text-gray-300"
+                          }`}
+                        >
                           {isDragActive
                             ? "Drop files here..."
                             : "Drag & drop or click"}
@@ -470,7 +493,8 @@ const Sidebar = ({ projectId }) => {
                           Gallery
                         </h4>
                         <span className="text-xs text-gray-500 px-2 py-1 bg-black/60 rounded-full">
-                          {assets.length} {assets.length === 1 ? "asset" : "assets"}
+                          {assets.length}{" "}
+                          {assets.length === 1 ? "asset" : "assets"}
                         </span>
                       </div>
 
@@ -494,7 +518,9 @@ const Sidebar = ({ projectId }) => {
                             <ImageIcon className="relative w-12 h-12 text-gray-600" />
                           </div>
                           <p className="text-gray-500 text-sm">No assets yet</p>
-                          <p className="text-gray-600 text-xs mt-1">Upload your first image</p>
+                          <p className="text-gray-600 text-xs mt-1">
+                            Upload your first image
+                          </p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-2 gap-3">
@@ -508,7 +534,7 @@ const Sidebar = ({ projectId }) => {
                               className="group relative bg-black/60 hover:bg-black/80 rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300 shadow-lg"
                             >
                               <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-xl blur opacity-0 group-hover:opacity-30 transition-opacity" />
-                              
+
                               <div
                                 className="relative aspect-square bg-gradient-to-br from-cyan-950/30 via-purple-950/30 to-pink-950/30 flex items-center justify-center cursor-pointer overflow-hidden"
                                 onClick={() => {
