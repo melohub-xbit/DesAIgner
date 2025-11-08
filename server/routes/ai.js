@@ -7,16 +7,78 @@ const router = express.Router();
 const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.0-flash-exp";
 const DEFAULT_CANVAS = { width: 1920, height: 1080 };
 const COLOR_PALETTE = [
-  "#38bdf8",
-  "#f97316",
-  "#22c55e",
-  "#a855f7",
-  "#facc15",
-  "#ec4899",
-  "#14b8a6",
+  // Primary cyan/sky blues (matching app theme)
+  "#38bdf8", // Sky 400
+  "#0ea5e9", // Sky 500
+  "#06b6d4", // Cyan 500
+  "#0284c7", // Sky 600
+
+  // Purple/violet (matching gradient theme)
+  "#8b5cf6", // Violet 500
+  "#7c3aed", // Violet 600
+  "#a855f7", // Purple 500
+  "#9333ea", // Purple 600
+
+  // Complementary colors
+  "#ec4899", // Pink 500
+  "#f43f5e", // Rose 500
+  "#f97316", // Orange 500
+  "#fb923c", // Orange 400
+
+  // Green/teal accents
+  "#14b8a6", // Teal 500
+  "#10b981", // Emerald 500
+  "#22c55e", // Green 500
+  "#84cc16", // Lime 500
+
+  // Yellow/amber for highlights
+  "#facc15", // Yellow 400
+  "#fbbf24", // Amber 400
+  "#f59e0b", // Amber 500
+
+  // Cool tones
+  "#0891b2", // Cyan 600
+  "#6366f1", // Indigo 500
 ];
 
 let genAI;
+
+// Enhanced system prompt for high-quality diagram generation
+const SYSTEM_PROMPT = `You are an expert UI/UX designer and creative layout specialist for DesAIgner's collaborative canvas tool. Your mission is to create visually stunning, professional-grade UI diagrams, process flows, and layouts that rival the quality of top design tools.
+
+DESIGN PRINCIPLES:
+- Create balanced, harmonious compositions with proper visual hierarchy
+- Use the golden ratio (1.618) and rule of thirds for element placement
+- Maintain consistent spacing using 8px, 16px, or 24px increments
+- Ensure excellent readability with appropriate contrast and typography
+- Follow modern design trends: clean lines, subtle shadows, and elegant spacing
+
+ELEMENT PLACEMENT STRATEGY:
+- Position elements strategically to create natural flow and visual balance
+- Use negative space effectively to avoid cluttered layouts
+- Align elements to an invisible grid for professional appearance
+- Group related elements logically while maintaining visual separation
+- Consider user eye movement patterns (F/Z layout, left-to-right flow)
+
+COLOR AND STYLING:
+- Use colors that create visual harmony and proper contrast
+- Apply subtle color variations to create depth and hierarchy
+- Ensure text elements have sufficient contrast for readability
+- Use color psychology appropriately for different element types
+
+PROFESSIONAL QUALITY CHECKS:
+- Every layout must be production-ready and visually polished
+- Elements should have appropriate proportions and realistic sizing
+- Text should be legible with proper font sizing and spacing
+- Layouts should work well at the specified canvas dimensions
+- Create designs that would impress professional designers
+
+OUTPUT REQUIREMENTS:
+- Generate complementary elements that work together as a cohesive design
+- Each element must have precise positioning and appropriate dimensions
+- Ensure all elements stay within canvas bounds with proper margins
+- Create meaningful relationships between elements when appropriate
+- Return only valid JSON matching the exact schema structure`;
 
 // Structured JSON schema for response
 const DESIGN_SCHEMA = {
@@ -155,35 +217,47 @@ router.post("/create-design", auth, async (req, res) => {
     const genAI = getClient();
     const model = genAI.getGenerativeModel({
       model: MODEL_NAME,
+      systemInstruction: SYSTEM_PROMPT,
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: DESIGN_SCHEMA,
       },
     });
 
-    const userPrompt = `You are a creative UI layout designer. Create a design layout based on this request: "${prompt.trim()}"
+    const userPrompt = `Create a professional, high-quality UI diagram based on this request: "${prompt.trim()}"
 
-Canvas size: ${canvasInfo.width}x${canvasInfo.height} pixels.
+Canvas dimensions: ${canvasInfo.width}x${canvasInfo.height} pixels.
 
-Generate 3-8 elements that form a complete, well-organized layout.
+DESIGN REQUIREMENTS:
+- Generate elements that form a cohesive, visually appealing composition
+- Focus on creating a design that looks like it was made by a professional designer
+- Use strategic spacing and alignment for visual harmony
+- Consider the golden ratio and rule of thirds for element placement
+- Ensure proper visual hierarchy with varying sizes and positions
 
-Supported element types:
-- "rectangle": for containers, cards, panels
-- "circle": for indicators, dots, decorative elements  
-- "triangle": for arrows, warnings, decorative shapes
-- "text": for labels, headings, descriptions
-- "line": for dividers, separators
-- "arrow": for connectors, flow indicators
+ELEMENT TYPES TO USE:
+- "rectangle": Main containers, cards, panels with clean proportions
+- "circle": Accent elements, indicators, or decorative focal points
+- "triangle": Directional elements, warnings, or geometric accents
+- "text": Clear, readable labels with appropriate sizing (24-48px for headings, 16-20px for body)
+- "line": Subtle dividers or connectors with 2-4px thickness
+- "arrow": Flow indicators or directional cues
 
-Requirements:
-- Position elements with x, y coordinates within canvas bounds
-- Set appropriate width and height for each element
-- For text elements: include text content and fontSize
-- Leave reasonable spacing between elements (min 20-30px)
-- Create visual hierarchy and logical grouping
-- Align elements to an 8px or 16px grid when possible
+PROFESSIONAL PLACEMENT RULES:
+- Start with a main focal element in the upper-left or center
+- Use the left-to-right, top-to-bottom reading pattern
+- Maintain 24-48px spacing between major elements
+- Align elements to an 8px grid for pixel-perfect precision
+- Keep 40-80px margins from canvas edges
+- Group related elements with closer spacing (16-24px)
 
-Return a JSON array of elements with required fields: type, x, y, width, height.`;
+QUALITY ASSURANCE:
+- Every element must have realistic, proportional dimensions
+- Text elements need meaningful, contextually appropriate content
+- Colors should create visual harmony (you don't need to specify colors - they're handled automatically)
+- The final layout should look polished and production-ready
+
+Generate elements that tell a visual story and create an engaging, professional design.`;
 
     const result = await model.generateContent(userPrompt);
     const response = result.response;

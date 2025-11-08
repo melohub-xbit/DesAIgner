@@ -118,7 +118,10 @@ const Teams = () => {
         return;
       }
 
-      const pmProject = await createPMProject(team._id, formData.designProjectId);
+      const pmProject = await createPMProject(
+        team._id,
+        formData.designProjectId
+      );
       toast.success("PM project created successfully!");
       setShowPMProjectModal(false);
       setFormData({ ...formData, designProjectId: "" });
@@ -133,13 +136,14 @@ const Teams = () => {
   const isOwner = team?.owner?._id === user?._id;
   const isAdmin =
     isOwner ||
-    team?.members?.some(
-      (m) => m.user._id === user?._id && m.role === "admin"
-    );
+    team?.members?.some((m) => m.user._id === user?._id && m.role === "admin");
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
-      <Spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="white" />
+      <Spotlight
+        className="-top-40 left-0 md:left-60 md:-top-20"
+        fill="white"
+      />
       <div className="fixed inset-0 bg-grid-white/[0.02] pointer-events-none" />
       <div className="fixed inset-0 bg-gradient-to-br from-blue-950/20 via-purple-950/10 to-pink-950/20 pointer-events-none" />
 
@@ -163,7 +167,7 @@ const Teams = () => {
                 <Users className="relative w-10 h-10 text-cyan-400" />
               </div>
               <h1 className="text-3xl font-bold font-heading bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-600">
-                Teams
+                teams
               </h1>
             </motion.div>
           </div>
@@ -248,7 +252,9 @@ const Teams = () => {
 
               {team.pmProjects && team.pmProjects.length > 0 && (
                 <div className="mt-6 pt-6 border-t border-white/10">
-                  <h3 className="text-lg font-semibold text-white mb-3">PM Projects</h3>
+                  <h3 className="text-lg font-semibold text-white mb-3">
+                    PM Projects
+                  </h3>
                   <div className="space-y-2">
                     {team.pmProjects.map((pmProj) => {
                       const pmProjectId = pmProj._id || pmProj;
@@ -257,11 +263,15 @@ const Teams = () => {
                           key={pmProjectId}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          onClick={() => navigate(`/pm-projects/${pmProjectId}`)}
+                          onClick={() =>
+                            navigate(`/pm-projects/${pmProjectId}`)
+                          }
                           className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-600/20 to-purple-600/20 hover:from-cyan-600/30 hover:to-purple-600/30 backdrop-blur-sm border border-cyan-500/30 hover:border-cyan-500/50 text-white rounded-xl transition-all duration-300 font-medium"
                         >
                           <Palette className="w-4 h-4" />
-                          {typeof pmProj === 'object' && pmProj.name ? pmProj.name : `View PM Project`}
+                          {typeof pmProj === "object" && pmProj.name
+                            ? pmProj.name
+                            : `View PM Project`}
                         </motion.button>
                       );
                     })}
@@ -369,8 +379,12 @@ const Teams = () => {
                 }
                 className="w-full px-4 py-2.5 bg-gray-800 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
               >
-                <option value="member" className="bg-gray-800 text-white">Member</option>
-                <option value="admin" className="bg-gray-800 text-white">Admin</option>
+                <option value="member" className="bg-gray-800 text-white">
+                  Member
+                </option>
+                <option value="admin" className="bg-gray-800 text-white">
+                  Admin
+                </option>
               </select>
             </div>
             <div className="flex gap-3 pt-2">
@@ -414,14 +428,23 @@ const Teams = () => {
                 <select
                   value={formData.designProjectId}
                   onChange={(e) =>
-                    setFormData({ ...formData, designProjectId: e.target.value })
+                    setFormData({
+                      ...formData,
+                      designProjectId: e.target.value,
+                    })
                   }
                   required
                   className="w-full px-4 py-2.5 bg-gray-800 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
                 >
-                  <option value="" className="bg-gray-800 text-white">Select a design project</option>
+                  <option value="" className="bg-gray-800 text-white">
+                    Select a design project
+                  </option>
                   {designProjects.map((project) => (
-                    <option key={project._id} value={project._id} className="bg-gray-800 text-white">
+                    <option
+                      key={project._id}
+                      value={project._id}
+                      className="bg-gray-800 text-white"
+                    >
                       {project.name}
                     </option>
                   ))}
@@ -485,4 +508,3 @@ const Modal = ({ title, children, onClose }) => {
 };
 
 export default Teams;
-
