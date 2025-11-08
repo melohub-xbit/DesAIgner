@@ -15,6 +15,9 @@ import Home from "./pages/Home";
 import ProjectSettings from "./pages/ProjectSettings";
 import About from "./pages/About";
 import Community from "./pages/Community";
+import Teams from "./pages/Teams";
+import PMProject from "./pages/PMProject";
+import PMDashboard from "./pages/PMDashboard";
 
 const RootRedirect = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -62,6 +65,30 @@ function App() {
           element={
             <ProtectedRoute>
               <ProjectSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teams"
+          element={
+            <ProtectedRoute>
+              <Teams />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pm-projects/:pmProjectId"
+          element={
+            <ProtectedRoute>
+              <PMProject />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pm-dashboard"
+          element={
+            <ProtectedRoute>
+              <PMDashboard />
             </ProtectedRoute>
           }
         />

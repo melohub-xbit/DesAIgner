@@ -72,3 +72,31 @@ export const assetsAPI = {
 export const aiAPI = {
   createDesign: (data) => api.post("/ai/create-design", data),
 };
+
+export const teamsAPI = {
+  getMyTeam: () => api.get("/teams"),
+  create: (data) => api.post("/teams", data),
+  getOne: (id) => api.get(`/teams/${id}`),
+  update: (id, data) => api.put(`/teams/${id}`, data),
+  inviteMember: (id, data) => api.post(`/teams/${id}/members`, data),
+  removeMember: (id, memberId) => api.delete(`/teams/${id}/members/${memberId}`),
+  createPMProject: (id, data) => api.post(`/teams/${id}/pm-project`, data),
+};
+
+export const pmProjectsAPI = {
+  getAll: () => api.get("/pm-projects"),
+  getOne: (id) => api.get(`/pm-projects/${id}`),
+  update: (id, data) => api.put(`/pm-projects/${id}`, data),
+  getByDesignProject: (designProjectId) =>
+    api.get(`/pm-projects/design/${designProjectId}`),
+};
+
+export const tasksAPI = {
+  getByPMProject: (pmProjectId) =>
+    api.get(`/tasks/pm-project/${pmProjectId}`),
+  create: (data) => api.post("/tasks", data),
+  update: (id, data) => api.put(`/tasks/${id}`, data),
+  delete: (id) => api.delete(`/tasks/${id}`),
+  updateStatus: (id, data) => api.patch(`/tasks/${id}/status`, data),
+  updateAssignee: (id, data) => api.patch(`/tasks/${id}/assignee`, data),
+};

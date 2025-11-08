@@ -11,6 +11,9 @@ const authRoutes = require("./routes/auth");
 const projectRoutes = require("./routes/projects");
 const assetRoutes = require("./routes/assets");
 const aiRoutes = require("./routes/ai");
+const teamRoutes = require("./routes/teams");
+const pmProjectRoutes = require("./routes/pm-projects");
+const taskRoutes = require("./routes/tasks");
 const { setupSocketHandlers } = require("./socket/handlers");
 
 const app = express();
@@ -47,6 +50,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/assets", assetRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/teams", teamRoutes);
+app.use("/api/pm-projects", pmProjectRoutes);
+app.use("/api/tasks", taskRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "DesAIgner API is running" });

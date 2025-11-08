@@ -25,10 +25,13 @@ import {
   ChevronDown,
   FolderOpen,
   Share2,
+  BarChart3,
+  CheckSquare,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../store/authStore";
-import { projectsAPI } from "../utils/api";
+import { usePMStore } from "../store/pmStore";
+import { projectsAPI, pmProjectsAPI } from "../utils/api";
 import { Spotlight } from "../components/ui/spotlight-new";
 import { CardSpotlight } from "../components/ui/CardSpotlight";
 
@@ -51,10 +54,12 @@ const Dashboard = () => {
     publicProjects: 0,
   });
   const { user, logout, isAuthenticated } = useAuthStore();
+  const { fetchTeam, team } = usePMStore();
   const navigate = useNavigate();
 
   useEffect(() => {
     loadProjects();
+    fetchTeam();
   }, []);
 
   useEffect(() => {
@@ -285,6 +290,26 @@ const Dashboard = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/pm-dashboard")}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 backdrop-blur-sm border border-purple-500/30 hover:border-purple-500/50 text-white rounded-full transition-all duration-300"
+                title="Project Management Dashboard"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span className="hidden sm:inline">PM Dashboard</span>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/teams")}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600/20 to-purple-600/20 hover:from-cyan-600/30 hover:to-purple-600/30 backdrop-blur-sm border border-cyan-500/30 hover:border-cyan-500/50 text-white rounded-full transition-all duration-300"
+                title="Teams"
+              >
+                <Users className="w-4 h-4" />
+                <span className="hidden sm:inline">Teams</span>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleOpenCommunity}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600/20 to-purple-600/20 hover:from-cyan-600/30 hover:to-purple-600/30 backdrop-blur-sm border border-cyan-500/30 hover:border-cyan-500/50 text-white rounded-full transition-all duration-300"
                 title="View Community Projects"
@@ -480,6 +505,100 @@ const Dashboard = () => {
           </motion.div>
         </motion.div>
 
+        {/* PM Section */}
+        {team && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mb-8"
+          >
+            <CardSpotlight className="bg-black/40">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg border border-purple-500/30">
+                    <BarChart3 className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-1">
+                      Project Management
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      {team.pmProject
+                        ? "Manage your team's tasks and track progress"
+                        : "Create a PM project to start managing tasks"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  {team.pmProject ? (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate(`/pm-projects/${team.pmProject}`)}
+                      className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-2xl hover:shadow-purple-500/50 text-white rounded-xl transition-all duration-300 font-medium"
+                    >
+                      View PM Project
+                    </motion.button>
+                  ) : (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate("/teams")}
+                      className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-purple-600 hover:shadow-2xl hover:shadow-purple-500/50 text-white rounded-xl transition-all duration-300 font-medium"
+                    >
+                      Create PM Project
+                    </motion.button>
+                  )}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate("/pm-dashboard")}
+                    className="px-6 py-3 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 text-white rounded-xl transition-all duration-300 font-medium"
+                  >
+                    Dashboard
+                  </motion.button>
+                </div>
+              </div>
+            </CardSpotlight>
+          </motion.div>
+        )}
+
+        {!team && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mb-8"
+          >
+            <CardSpotlight className="bg-black/40">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg border border-purple-500/30">
+                    <Users className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-1">
+                      Start Project Management
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      Create a team to collaborate on project management
+                    </p>
+                  </div>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate("/teams")}
+                  className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-purple-600 hover:shadow-2xl hover:shadow-purple-500/50 text-white rounded-xl transition-all duration-300 font-medium"
+                >
+                  Create Team
+                </motion.button>
+              </div>
+            </CardSpotlight>
+          </motion.div>
+        )}
+
         {/* Projects Grid */}
         {loading ? (
           <div className="flex items-center justify-center py-32">
@@ -577,7 +696,7 @@ const Dashboard = () => {
                       <h3 className="text-xl font-semibold text-white mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-cyan-400 group-hover:to-purple-400 transition-all duration-300 truncate">
                         {project.name}
                       </h3>
-                      <div className="flex items-center gap-4 text-sm text-gray-400">
+                      <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-4 h-4 text-cyan-400/70" />
                           <span>{formatDate(project.updatedAt)}</span>
@@ -589,6 +708,8 @@ const Dashboard = () => {
                           </div>
                         )}
                       </div>
+                      {/* PM Project Link */}
+                      <PMProjectLink designProjectId={project._id} />
                     </div>
 
                     {/* Hover Indicator */}
@@ -891,6 +1012,51 @@ const Dashboard = () => {
       )}
     </div>
   );
+};
+
+// PM Project Link Component
+const PMProjectLink = ({ designProjectId }) => {
+  const [pmProject, setPMProject] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    loadPMProject();
+  }, [designProjectId]);
+
+  const loadPMProject = async () => {
+    try {
+      setLoading(true);
+      const { data } = await pmProjectsAPI.getByDesignProject(designProjectId);
+      setPMProject(data.pmProject);
+    } catch (error) {
+      // PM project doesn't exist, that's okay
+      setPMProject(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return null;
+
+  if (pmProject) {
+    return (
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/pm-projects/${pmProject._id}`);
+        }}
+        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 backdrop-blur-sm border border-purple-500/30 hover:border-purple-500/50 text-white rounded-lg transition-all duration-300 text-sm font-medium"
+      >
+        <CheckSquare className="w-4 h-4" />
+        View PM Project
+      </motion.button>
+    );
+  }
+
+  return null;
 };
 
 export default Dashboard;
