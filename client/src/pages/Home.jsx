@@ -7,14 +7,62 @@ import { CanvasRevealEffect, Card } from "../components/ui/CanvasRevealEffect";
 import { CardSpotlight } from "../components/ui/CardSpotlight";
 import { EvervaultCard } from "../components/ui/EvervaultCard";
 import { TextHoverEffect } from "../components/ui/TextHoverEffect";
-import { Sparkles, Zap, Users, ArrowRight } from "lucide-react";
+import { Sparkles, Zap, Users, ArrowRight, Palette, Info } from "lucide-react";
 
 const Home = () => {
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      {/* Navbar */}
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/50 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3"
+            >
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full blur opacity-75 animate-pulse" />
+                <Palette className="relative w-8 h-8 text-cyan-400" />
+              </div>
+              <Link to="/home">
+                <h1 className="text-2xl font-bold font-heading bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-600">
+                  des-ai-gner
+                </h1>
+              </Link>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3"
+            >
+              <Link to="/about">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 text-white rounded-full transition-all duration-300"
+                >
+                  <Info className="w-4 h-4" />
+                  <span className="hidden sm:inline">About Us</span>
+                </motion.button>
+              </Link>
+              <Link to="/login">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 text-white rounded-full transition-all duration-300"
+                >
+                  Sign In
+                </motion.button>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section with Spotlight */}
       <Spotlight />
-      <section className="min-h-screen relative flex items-center justify-center bg-black/[0.96] antialiased bg-grid-white/[0.02] overflow-hidden">
+      <section className="min-h-screen relative flex items-center justify-center bg-black/[0.96] antialiased bg-grid-white/[0.02] overflow-hidden pt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -199,10 +247,23 @@ const Home = () => {
       {/* Footer */}
       <footer className="py-12 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-gray-400">
-            <p className="text-sm">
-              © 2025 DesAIgner. Built with passion for creators.
-            </p>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-center sm:text-left text-gray-400">
+              <p className="text-sm">
+                © 2025 DesAIgner. Built with passion for creators.
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link to="/about">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                  About Us
+                </motion.button>
+              </Link>
+            </div>
           </div>
         </div>
       </footer>

@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useImperativeHandle, forwardRef } from "react";
 import {
   Application,
   Container,
@@ -16,7 +16,7 @@ import {
 import { useEditorStore } from "../../store/editorStore";
 import socketService from "../../utils/socket";
 
-const PixiCanvas = ({ projectId }) => {
+const PixiCanvas = forwardRef(({ projectId }, ref) => {
   const GRID_MAJOR = 100;
   const GRID_MINOR = GRID_MAJOR / 4;
   const canvasRef = useRef(null);
@@ -1608,6 +1608,185 @@ const PixiCanvas = ({ projectId }) => {
     displayObject.cacheAsBitmap = !!effects.cacheAsBitmap;
   };
 
+  // Export function to capture canvas as image
+  const exportCanvas = async (format = "png", quality = 1.0) => {
+    const app = appRef.current;
+    const worldLayer = worldLayerRef.current;
+    if (!app || !worldLayer) {
+      throw new Error("Canvas not initialized");
+    }
+
+    // Get canvas dimensions from settings
+    const canvasWidth = canvasSettings.width || 1920;
+    const canvasHeight = canvasSettings.height || 1080;
+    const backgroundColor = canvasSettings.backgroundColor || "#f5f5f5";
+
+    // Calculate bounds of all visible elements
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    let hasElements = false;
+    
+    if (elements.length > 0) {
+      elements.forEach((element) => {
+        if (!element.visible) return;
+        hasElements = true;
+        minX = Math.min(minX, element.x);
+        minY = Math.min(minY, element.y);
+        maxX = Math.max(maxX, element.x + element.width);
+        maxY = Math.max(maxY, element.y + element.height);
+      });
+    }
+
+    // Use full canvas if no elements or use element bounds with padding
+    const padding = 50;
+    const exportX = hasElements ? Math.max(0, minX - padding) : 0;
+    const exportY = hasElements ? Math.max(0, minY - padding) : 0;
+    const exportWidth = hasElements 
+      ? Math.min(canvasWidth, maxX + padding - exportX) 
+      : canvasWidth;
+    const exportHeight = hasElements 
+      ? Math.min(canvasHeight, maxY + padding - exportY) 
+      : canvasHeight;
+
+    // Create a temporary container for export
+    const exportContainer = new Container();
+    
+    // Add background
+    const bg = new Graphics();
+    bg.beginFill(parseColor(backgroundColor, 0xffffff));
+    bg.drawRect(0, 0, exportWidth, exportHeight);
+    bg.endFill();
+    exportContainer.addChild(bg);
+
+    // Store original transform
+    const originalScale = worldLayer.scale.x;
+    const originalPosition = { x: worldLayer.position.x, y: worldLayer.position.y };
+    const originalPan = { ...pan };
+    const originalZoom = zoom;
+
+    try {
+      // Temporarily reset camera to render at 1:1 scale
+      worldLayer.scale.set(1);
+      worldLayer.position.set(0, 0);
+
+      // Re-render elements from store data to export container
+      const offsetX = -exportX;
+      const offsetY = -exportY;
+
+      // Sort elements by zIndex
+      const sortedElements = [...elements]
+        .filter((el) => el.visible)
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+
+      sortedElements.forEach((element) => {
+        let pixiObject = null;
+
+        switch (element.type) {
+          case "rectangle": {
+            pixiObject = new Graphics();
+            drawRectangleShape(pixiObject, element);
+            break;
+          }
+          case "circle": {
+            pixiObject = new Graphics();
+            drawEllipseShape(pixiObject, element);
+            break;
+          }
+          case "triangle": {
+            pixiObject = new Graphics();
+            drawTriangleShape(pixiObject, element);
+            break;
+          }
+          case "arrow": {
+            pixiObject = new Graphics();
+            drawArrowShape(pixiObject, element);
+            break;
+          }
+          case "line": {
+            pixiObject = new Graphics();
+            drawLineShape(pixiObject, element);
+            break;
+          }
+          case "freehand": {
+            pixiObject = new Graphics();
+            drawFreehandShape(pixiObject, element);
+            break;
+          }
+          case "text": {
+            pixiObject = new Text(element.text || "Text", {
+              fontSize: element.fontSize || 24,
+              fontFamily: element.fontFamily || "Arial",
+              fill: element.fill || "#000000",
+              align: element.align || "left",
+            });
+            pixiObject.width = element.width;
+            pixiObject.height = element.height;
+            break;
+          }
+          case "image": {
+            const cachedTexture = textureCacheRef.current.get(element.src);
+            if (cachedTexture) {
+              pixiObject = new Sprite(cachedTexture);
+              pixiObject.width = element.width;
+              pixiObject.height = element.height;
+            }
+            break;
+          }
+          default:
+            break;
+        }
+
+        if (pixiObject) {
+          pixiObject.position.set(element.x + offsetX, element.y + offsetY);
+          pixiObject.rotation = element.rotation || 0;
+          pixiObject.alpha = element.opacity || 1;
+          pixiObject.blendMode = getBlendMode(element.blendMode);
+          applyEffects(pixiObject, element);
+          exportContainer.addChild(pixiObject);
+        }
+      });
+
+      // Use renderer to extract canvas
+      const extract = app.renderer.extract;
+      const canvas = extract.canvas(exportContainer);
+
+      // Convert to blob and download
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Failed to create image blob"));
+              return;
+            }
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `canvas-export-${Date.now()}.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            resolve(blob);
+          },
+          format === "png" ? "image/png" : "image/jpeg",
+          format === "jpeg" ? quality : undefined
+        );
+      });
+    } finally {
+      // Restore original transform
+      worldLayer.scale.set(originalScale);
+      worldLayer.position.set(originalPosition.x, originalPosition.y);
+      // Cleanup
+      exportContainer.destroy({ children: true });
+    }
+  };
+
+  // Expose export function via ref
+  useImperativeHandle(ref, () => ({
+    exportCanvas,
+  }));
+
   const currentCursor = (() => {
     if (resizeStateRef.current && resizeStateRef.current.handleConfig) {
       return resizeStateRef.current.handleConfig.cursor;
@@ -1634,6 +1813,8 @@ const PixiCanvas = ({ projectId }) => {
       }}
     />
   );
-};
+});
+
+PixiCanvas.displayName = "PixiCanvas";
 
 export default PixiCanvas;

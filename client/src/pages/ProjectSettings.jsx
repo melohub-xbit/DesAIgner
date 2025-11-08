@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -16,6 +17,8 @@ import {
 import toast from "react-hot-toast";
 import { useAuthStore } from "../store/authStore";
 import { projectsAPI } from "../utils/api";
+import { Spotlight } from "../components/ui/spotlight-new";
+import { CardSpotlight } from "../components/ui/CardSpotlight";
 
 const tabs = [
   { id: "overview", label: "Overview" },
@@ -206,10 +209,19 @@ const ProjectSettings = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-          <p className="text-gray-400">Loading project settings...</p>
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+            <div
+              className="absolute inset-0 w-20 h-20 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"
+              style={{
+                animationDirection: "reverse",
+                animationDuration: "1.5s",
+              }}
+            />
+          </div>
+          <p className="text-gray-400 mt-4">Loading project settings...</p>
         </div>
       </div>
     );
@@ -220,279 +232,347 @@ const ProjectSettings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 pb-16">
-      <header className="bg-gray-800 border-b border-gray-700">
-        <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-gray-200"
-              title="Go back"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-semibold text-white">
-                Project settings
-              </h1>
-              <p className="text-gray-400">
-                {project.name} · Your role: {roleLabels[currentUserRole]}
-              </p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-black text-white overflow-hidden">
+      {/* Spotlight Effect */}
+      <Spotlight
+        className="-top-40 left-0 md:left-60 md:-top-20"
+        fill="white"
+      />
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => loadProject({ silent: true })}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-200 transition-colors"
-              title="Refresh project details"
+      {/* Animated Background Grid */}
+      <div className="fixed inset-0 bg-grid-white/[0.02] pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-blue-950/20 via-purple-950/10 to-pink-950/20 pointer-events-none" />
+
+      {/* Header */}
+      <header className="relative z-10 border-b border-white/10 bg-black/50 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-4"
             >
-              <RefreshCcw
-                className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
-              />
-              <span className="text-sm">Refresh</span>
-            </button>
-            <Link
-              to={`/editor/${project._id}`}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition-colors"
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate(-1)}
+                className="p-2 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 text-gray-200"
+                title="Go back"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </motion.button>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold font-heading bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-600">
+                  Project settings
+                </h1>
+                <p className="text-gray-400 mt-1">
+                  {project.name} · Your role: {roleLabels[currentUserRole]}
+                </p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3"
             >
-              <ArrowUpRight className="w-4 h-4" />
-              <span className="text-sm">Open editor</span>
-            </Link>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => loadProject({ silent: true })}
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-xl text-gray-200 transition-all duration-300"
+                title="Refresh project details"
+              >
+                <RefreshCcw
+                  className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+                />
+                <span className="text-sm">Refresh</span>
+              </motion.button>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Link
+                  to={`/editor/${project._id}`}
+                  className="group relative flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-purple-600 hover:shadow-2xl hover:shadow-purple-500/50 rounded-xl text-white transition-all duration-300 font-medium"
+                >
+                  <div className="absolute -inset-1 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-xl blur opacity-30 group-hover:opacity-100 transition duration-300" />
+                  <ArrowUpRight className="relative w-4 h-4" />
+                  <span className="relative text-sm">Open editor</span>
+                </Link>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-10">
-        <nav className="flex gap-4 border-b border-gray-700 mb-8">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <motion.nav
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex gap-4 border-b border-white/10 mb-8"
+        >
           {tabs.map((tab) => (
-            <button
+            <motion.button
               key={tab.id}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setActiveTab(tab.id)}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? "border-blue-500 text-white"
+                  ? "border-cyan-500 text-white"
                   : "border-transparent text-gray-400 hover:text-gray-200"
               }`}
             >
               {tab.label}
-            </button>
+            </motion.button>
           ))}
-        </nav>
+        </motion.nav>
 
         {activeTab === "overview" && (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <section className="bg-gray-800 rounded-xl border border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">
-                Project summary
-              </h2>
-              <dl className="space-y-4 text-sm">
-                <div className="flex justify-between text-gray-300">
-                  <dt>Name</dt>
-                  <dd className="font-medium text-white">{project.name}</dd>
-                </div>
-                <div className="flex justify-between text-gray-300">
-                  <dt>Description</dt>
-                  <dd className="text-right max-w-sm text-gray-400">
-                    {project.description || "No description yet"}
-                  </dd>
-                </div>
-                <div className="flex justify-between text-gray-300">
-                  <dt>Owner</dt>
-                  <dd className="font-medium text-white">
-                    {project.owner?.username}
-                  </dd>
-                </div>
-                <div className="flex justify-between text-gray-300">
-                  <dt>Collaborators</dt>
-                  <dd className="font-medium text-white">
-                    {project.collaborators?.length || 0}
-                  </dd>
-                </div>
-                <div className="flex justify-between text-gray-300">
-                  <dt>Created</dt>
-                  <dd className="text-gray-400">
-                    {new Date(project.createdAt).toLocaleString()}
-                  </dd>
-                </div>
-                <div className="flex justify-between text-gray-300">
-                  <dt>Last updated</dt>
-                  <dd className="text-gray-400">
-                    {new Date(project.updatedAt).toLocaleString()}
-                  </dd>
-                </div>
-              </dl>
-            </section>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="grid gap-6 lg:grid-cols-2"
+          >
+            <CardSpotlight className="bg-black/50 backdrop-blur-xl border border-white/10">
+              <section className="p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">
+                  Project summary
+                </h2>
+                <dl className="space-y-4 text-sm">
+                  <div className="flex justify-between text-gray-300">
+                    <dt>Name</dt>
+                    <dd className="font-medium text-white">{project.name}</dd>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <dt>Description</dt>
+                    <dd className="text-right max-w-sm text-gray-400">
+                      {project.description || "No description yet"}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <dt>Owner</dt>
+                    <dd className="font-medium text-white">
+                      {project.owner?.username}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <dt>Collaborators</dt>
+                    <dd className="font-medium text-white">
+                      {project.collaborators?.length || 0}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <dt>Created</dt>
+                    <dd className="text-gray-400">
+                      {new Date(project.createdAt).toLocaleString()}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <dt>Last updated</dt>
+                    <dd className="text-gray-400">
+                      {new Date(project.updatedAt).toLocaleString()}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+            </CardSpotlight>
 
-            <section className="bg-gray-800 rounded-xl border border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">
-                Canvas configuration
-              </h2>
-              <div className="space-y-3 text-sm text-gray-300">
-                <div className="flex justify-between">
-                  <span>Dimensions</span>
-                  <span className="text-white">
-                    {project.canvasSettings?.width} ×{" "}
-                    {project.canvasSettings?.height}
-                  </span>
+            <CardSpotlight className="bg-black/50 backdrop-blur-xl border border-white/10">
+              <section className="p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">
+                  Canvas configuration
+                </h2>
+                <div className="space-y-3 text-sm text-gray-300">
+                  <div className="flex justify-between">
+                    <span>Dimensions</span>
+                    <span className="text-white">
+                      {project.canvasSettings?.width} ×{" "}
+                      {project.canvasSettings?.height}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Background</span>
+                    <span className="text-white">
+                      {project.canvasSettings?.backgroundColor}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Grid</span>
+                    <span className="text-white">
+                      {project.canvasSettings?.gridEnabled
+                        ? "Enabled"
+                        : "Disabled"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Snap to grid</span>
+                    <span className="text-white">
+                      {project.canvasSettings?.snapToGrid ? "On" : "Off"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total elements</span>
+                    <span className="text-white">
+                      {project.elements?.length || 0}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Background</span>
-                  <span className="text-white">
-                    {project.canvasSettings?.backgroundColor}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Grid</span>
-                  <span className="text-white">
-                    {project.canvasSettings?.gridEnabled
-                      ? "Enabled"
-                      : "Disabled"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Snap to grid</span>
-                  <span className="text-white">
-                    {project.canvasSettings?.snapToGrid ? "On" : "Off"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Total elements</span>
-                  <span className="text-white">
-                    {project.elements?.length || 0}
-                  </span>
-                </div>
-              </div>
-            </section>
+              </section>
+            </CardSpotlight>
 
-            <section className="bg-gray-800 rounded-xl border border-gray-700 p-6 lg:col-span-2">
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <CalendarClock className="w-4 h-4 text-blue-400" />
-                Recent activity snapshot
-              </h2>
-              <p className="text-sm text-gray-400">
-                Activity tracking is coming soon. For now, use the editor
-                history to review recent changes.
-              </p>
-            </section>
-          </div>
+            <CardSpotlight className="bg-black/50 backdrop-blur-xl border border-white/10 lg:col-span-2">
+              <section className="p-6">
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <CalendarClock className="w-4 h-4 text-cyan-400" />
+                  Recent activity snapshot
+                </h2>
+                <p className="text-sm text-gray-400">
+                  Activity tracking is coming soon. For now, use the editor
+                  history to review recent changes.
+                </p>
+              </section>
+            </CardSpotlight>
+          </motion.div>
         )}
 
         {activeTab === "collaborators" && (
-          <div className="space-y-6">
-            <section className="bg-gray-800 rounded-xl border border-gray-700 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <Users className="w-4 h-4 text-blue-400" />
-                  Manage collaborators
-                </h2>
-                {!canManage && (
-                  <span className="text-xs text-gray-400">
-                    Only project owners or admins can manage collaborators
-                  </span>
-                )}
-              </div>
-
-              <div className="grid gap-6 lg:grid-cols-2">
-                <form
-                  onSubmit={handleInviteSubmit}
-                  className="bg-gray-900/50 border border-gray-700 rounded-lg p-5 space-y-4"
-                >
-                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                    <UserCog className="w-4 h-4 text-blue-400" />
-                    Invite by email
-                  </h3>
-                  <p className="text-xs text-gray-400">
-                    Send a direct invitation to someone who already has an
-                    account.
-                  </p>
-                  <input
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(event) => setInviteEmail(event.target.value)}
-                    placeholder="colleague@example.com"
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    disabled={!canManage || isInviting}
-                    required
-                  />
-                  <div className="flex items-center gap-3">
-                    <label className="text-xs text-gray-400">Role</label>
-                    <select
-                      value={inviteRole}
-                      onChange={(event) => setInviteRole(event.target.value)}
-                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      disabled={!canManage || isInviting}
-                    >
-                      <option value="viewer">Viewer</option>
-                      <option value="editor">Editor</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm text-white transition-colors disabled:opacity-60"
-                    disabled={!canManage || isInviting}
-                  >
-                    <UserCheck className="w-4 h-4" />
-                    {isInviting ? "Sending invite..." : "Send invite"}
-                  </button>
-                </form>
-
-                <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-5 space-y-4">
-                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-green-400" />
-                    Share invite code
-                  </h3>
-                  <p className="text-xs text-gray-400">
-                    Generate a temporary code teammates can use from their
-                    dashboard to join this project.
-                  </p>
-                  <button
-                    onClick={handleGenerateInviteCode}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm text-gray-200 transition-colors disabled:opacity-60"
-                    disabled={!canManage || isGeneratingCode}
-                  >
-                    <RefreshCcw
-                      className={`w-4 h-4 ${
-                        isGeneratingCode ? "animate-spin" : ""
-                      }`}
-                    />
-                    {isGeneratingCode ? "Generating..." : "Generate new code"}
-                  </button>
-                  {inviteCode && (
-                    <div className="flex items-center gap-3 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
-                      <span className="text-lg font-mono tracking-widest text-white">
-                        {inviteCode}
-                      </span>
-                      <button
-                        onClick={handleCopyInviteCode}
-                        className="ml-auto p-2 bg-gray-700 hover:bg-gray-600 rounded text-gray-200 transition-colors"
-                        title="Copy invite code"
-                      >
-                        {hasCopiedCode ? (
-                          <Check className="w-4 h-4 text-green-400" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="space-y-6"
+          >
+            <CardSpotlight className="bg-black/50 backdrop-blur-xl border border-white/10">
+              <section className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <Users className="w-4 h-4 text-cyan-400" />
+                    Manage collaborators
+                  </h2>
+                  {!canManage && (
+                    <span className="text-xs text-gray-400">
+                      Only project owners or admins can manage collaborators
+                    </span>
                   )}
-                  <p className="text-xs text-gray-500">
-                    Codes expire automatically after 24 hours or once disabled
-                    by the owner.
-                  </p>
                 </div>
-              </div>
-            </section>
 
-            <section className="bg-gray-800 rounded-xl border border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-400" />
-                Collaborator roster
-              </h2>
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <CardSpotlight className="bg-black/40 border border-white/10">
+                    <form
+                      onSubmit={handleInviteSubmit}
+                      className="p-5 space-y-4"
+                    >
+                      <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                        <UserCog className="w-4 h-4 text-cyan-400" />
+                        Invite by email
+                      </h3>
+                      <p className="text-xs text-gray-400">
+                        Send a direct invitation to someone who already has an
+                        account.
+                      </p>
+                      <input
+                        type="email"
+                        value={inviteEmail}
+                        onChange={(event) => setInviteEmail(event.target.value)}
+                        placeholder="colleague@example.com"
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                        disabled={!canManage || isInviting}
+                        required
+                      />
+                      <div className="flex items-center gap-3">
+                        <label className="text-xs text-gray-400">Role</label>
+                        <select
+                          value={inviteRole}
+                          onChange={(event) =>
+                            setInviteRole(event.target.value)
+                          }
+                          className="flex-1 px-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                          disabled={!canManage || isInviting}
+                        >
+                          <option value="viewer">Viewer</option>
+                          <option value="editor">Editor</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        type="submit"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-600 to-purple-600 hover:shadow-2xl hover:shadow-purple-500/50 rounded-xl text-sm text-white transition-all duration-300 font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                        disabled={!canManage || isInviting}
+                      >
+                        <UserCheck className="w-4 h-4" />
+                        {isInviting ? "Sending invite..." : "Send invite"}
+                      </motion.button>
+                    </form>
+                  </CardSpotlight>
 
-              <div className="border border-gray-700 rounded-lg divide-y divide-gray-700">
-                {collaboratorEntries.map((collaborator) => {
+                  <CardSpotlight className="bg-black/40 border border-white/10">
+                    <div className="p-5 space-y-4">
+                      <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-green-400" />
+                        Share invite code
+                      </h3>
+                      <p className="text-xs text-gray-400">
+                        Generate a temporary code teammates can use from their
+                        dashboard to join this project.
+                      </p>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleGenerateInviteCode}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-xl text-sm text-gray-200 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                        disabled={!canManage || isGeneratingCode}
+                      >
+                        <RefreshCcw
+                          className={`w-4 h-4 ${
+                            isGeneratingCode ? "animate-spin" : ""
+                          }`}
+                        />
+                        {isGeneratingCode ? "Generating..." : "Generate new code"}
+                      </motion.button>
+                      {inviteCode && (
+                        <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
+                          <span className="text-lg font-mono tracking-widest text-white">
+                            {inviteCode}
+                          </span>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={handleCopyInviteCode}
+                            className="ml-auto p-2 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-lg text-gray-200 transition-all duration-300"
+                            title="Copy invite code"
+                          >
+                            {hasCopiedCode ? (
+                              <Check className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </motion.button>
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-500">
+                        Codes expire automatically after 24 hours or once
+                        disabled by the owner.
+                      </p>
+                    </div>
+                  </CardSpotlight>
+                </div>
+              </section>
+            </CardSpotlight>
+
+            <CardSpotlight className="bg-black/50 backdrop-blur-xl border border-white/10">
+              <section className="p-6">
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-cyan-400" />
+                  Collaborator roster
+                </h2>
+
+                <div className="border border-white/10 rounded-xl divide-y divide-white/10">
+                {collaboratorEntries.map((collaborator, index) => {
                   const collaboratorId =
                     collaborator.user?._id || collaborator.id;
                   const collaboratorRole = collaborator.role;
@@ -500,9 +580,12 @@ const ProjectSettings = () => {
                   const isCollaboratorOwner = collaboratorRole === "owner";
 
                   return (
-                    <div
+                    <motion.div
                       key={collaboratorId}
-                      className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 px-4 py-4"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 px-4 py-4 hover:bg-white/5 transition-colors rounded-lg"
                     >
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-white">
@@ -510,7 +593,7 @@ const ProjectSettings = () => {
                             collaborator.user?.email ||
                             "Unknown user"}
                           {isCurrent && (
-                            <span className="ml-2 text-xs text-blue-400">
+                            <span className="ml-2 text-xs text-cyan-400">
                               (You)
                             </span>
                           )}
@@ -550,14 +633,16 @@ const ProjectSettings = () => {
                             (collaboratorId === user?._id && !isOwner) ||
                             pendingRoleUserId === collaboratorId
                           }
-                          className="px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-3 py-2 bg-white/5 backdrop-blur-sm border border-white/10 focus:border-cyan-500/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all disabled:opacity-40"
                         >
                           <option value="viewer">Viewer</option>
                           <option value="editor">Editor</option>
                           <option value="admin">Admin</option>
                         </select>
 
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() =>
                             handleRemoveCollaborator(collaboratorId)
                           }
@@ -567,7 +652,7 @@ const ProjectSettings = () => {
                             removingUserId === collaboratorId ||
                             collaboratorId === user?._id
                           }
-                          className="p-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-400 transition-colors disabled:opacity-40"
+                          className="p-2 rounded-xl bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 hover:border-red-500/40 text-red-400 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
                           title="Remove collaborator"
                         >
                           {removingUserId === collaboratorId ? (
@@ -575,14 +660,15 @@ const ProjectSettings = () => {
                           ) : (
                             <Trash2 className="w-4 h-4" />
                           )}
-                        </button>
+                        </motion.button>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
-            </section>
-          </div>
+              </section>
+            </CardSpotlight>
+          </motion.div>
         )}
       </main>
     </div>

@@ -32,6 +32,7 @@ const Editor = () => {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const saveTimeoutRef = useRef(null);
+  const canvasRef = useRef(null);
 
   useEffect(() => {
     if (!token) {
@@ -246,12 +247,26 @@ const Editor = () => {
         project={project}
         projectId={projectId}
         onProjectUpdate={handleProjectUpdate}
+        onAIRequest={() => setAssistantOpen(true)}
+        onExport={() => {
+          if (canvasRef.current?.exportCanvas) {
+            canvasRef.current
+              .exportCanvas("png", 1.0)
+              .then(() => {
+                toast.success("Canvas exported successfully!");
+              })
+              .catch((error) => {
+                console.error("Export failed:", error);
+                toast.error("Failed to export canvas");
+              });
+          }
+        }}
       />
 
       <div className="flex-1 relative overflow-hidden">
         {/* Canvas - Full width background */}
         <div className="absolute inset-0">
-          <PixiCanvas projectId={projectId} />
+          <PixiCanvas ref={canvasRef} projectId={projectId} />
           <CollaboratorCursors />
         </div>
 

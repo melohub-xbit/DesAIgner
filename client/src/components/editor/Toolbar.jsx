@@ -28,7 +28,7 @@ import { useEditorStore } from "../../store/editorStore";
 import { projectsAPI } from "../../utils/api";
 import toast from "react-hot-toast";
 
-const Toolbar = ({ project, projectId, onProjectUpdate }) => {
+const Toolbar = ({ project, projectId, onProjectUpdate, onAIRequest, onExport }) => {
   const navigate = useNavigate();
   const [isRenaming, setIsRenaming] = useState(false);
   const [projectName, setProjectName] = useState(project?.name || "");
@@ -67,7 +67,11 @@ const Toolbar = ({ project, projectId, onProjectUpdate }) => {
   ];
 
   const handleExport = () => {
-    toast.success("Export feature coming soon!");
+    if (typeof onExport === "function") {
+      onExport();
+    } else {
+      toast.error("Export function not available");
+    }
   };
 
   const handleAI = () => {

@@ -7,7 +7,7 @@ export const useEditorStore = create((set, get) => ({
   canvasSettings: {
     width: 1920,
     height: 1080,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f5f5f5",
     gridEnabled: true,
     snapToGrid: false,
   },
