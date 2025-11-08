@@ -213,17 +213,6 @@ DesAIgner/
 
 ---
 
-## 👨‍💻 Contributing
-
-This project was built for the MERNIFY Hackathon. Contributions, issues, and feature requests are welcome!
-
----
-
-## 📄 License
-
-MIT License - feel free to use this project for learning or building upon it!
-
----
 
 ## ❤️ Acknowledgments
 
