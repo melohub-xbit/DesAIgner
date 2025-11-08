@@ -35,19 +35,19 @@ let teamMember2 = null;
 let teamMember3 = null;
 
 try {
-  teamMember1 = new URL("../assets/team-member-1.jpg", import.meta.url).href;
+  teamMember1 = new URL("../assets/teammember1.jpg", import.meta.url).href;
 } catch (e) {
   // Image not found, will use placeholder
 }
 
 try {
-  teamMember2 = new URL("../assets/team-member-2.jpg", import.meta.url).href;
+  teamMember2 = new URL("../assets/temmember2.jpg", import.meta.url).href;
 } catch (e) {
   // Image not found, will use placeholder
 }
 
 try {
-  teamMember3 = new URL("../assets/team-member-3.jpg", import.meta.url).href;
+  teamMember3 = new URL("../assets/teammember3.jpg", import.meta.url).href;
 } catch (e) {
   // Image not found, will use placeholder
 }
@@ -56,33 +56,33 @@ try {
 const teamMembers = [
   {
     id: 1,
-    name: "Team Member 1",
+    name: "Chaitya Shah",
     role: "Full Stack Developer",
     bio: "Passionate about creating seamless user experiences and building scalable applications.",
     image: teamMember1,
-    github: "https://github.com",
-    linkedin: "https://linkedin.com",
-    email: "member1@example.com",
+    github: "https://github.com/CShah44",
+    linkedin: "https://www.linkedin.com/in/chaitya-shah-0a7589267/",
+    email: "chaityashah36@gmail.com",
   },
   {
     id: 2,
-    name: "Team Member 2",
-    role: "UI/UX Designer",
+    name: "Krish Patel",
+    role: "Full Stack Developer",
     bio: "Design enthusiast focused on creating beautiful and intuitive interfaces that users love.",
     image: teamMember2,
-    github: "https://github.com",
-    linkedin: "https://linkedin.com",
-    email: "member2@example.com",
+    github: "https://github.com/kodercrish",
+    linkedin: "https://www.linkedin.com/in/krish-patel-aa235a300/",
+    email: "krishbipinpatel3@gmail.com",
   },
   {
     id: 3,
-    name: "Team Member 3",
-    role: "Backend Architect",
+    name: "Krishna Sai",
+    role: "Full Stack Developer",
     bio: "Expert in building robust backend systems and optimizing performance for better scalability.",
     image: teamMember3,
-    github: "https://github.com",
-    linkedin: "https://linkedin.com",
-    email: "member3@example.com",
+    github: "https://github.com/melohub-xbit",
+    linkedin: "https://www.linkedin.com/in/krishna-sai-velidanda-8h0oth-pu4/",
+    email: "kvelidanda@gmail.com",
   },
 ];
 
@@ -125,13 +125,13 @@ const About = () => {
   useEffect(() => {
     // Close user menu when clicking outside
     const handleClickOutside = (event) => {
-      if (showUserMenu && !event.target.closest('.user-menu-container')) {
+      if (showUserMenu && !event.target.closest(".user-menu-container")) {
         setShowUserMenu(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showUserMenu]);
 
   useEffect(() => {
@@ -142,7 +142,7 @@ const About = () => {
           const { projectsAPI } = await import("../utils/api");
           const { data } = await projectsAPI.getAll();
           const total = data.projects.length;
-          const publicCount = data.projects.filter(p => p.isPublic).length;
+          const publicCount = data.projects.filter((p) => p.isPublic).length;
           setUserStats({
             totalProjects: total,
             publicProjects: publicCount,
@@ -227,7 +227,11 @@ const About = () => {
                     <span className="hidden sm:inline text-gray-300 font-medium">
                       {user?.username}
                     </span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${
+                        showUserMenu ? "rotate-180" : ""
+                      }`}
+                    />
                   </motion.button>
 
                   {/* Dropdown Menu */}
@@ -247,30 +251,42 @@ const About = () => {
                               {user?.username?.[0]?.toUpperCase()}
                             </div>
                             <div className="flex-1">
-                              <p className="text-white font-semibold text-base">{user?.username}</p>
-                              <p className="text-gray-400 text-xs truncate">{user?.email}</p>
+                              <p className="text-white font-semibold text-base">
+                                {user?.username}
+                              </p>
+                              <p className="text-gray-400 text-xs truncate">
+                                {user?.email}
+                              </p>
                             </div>
                           </div>
-                          
+
                           {/* User Statistics */}
                           <div className="grid grid-cols-2 gap-3">
                             <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-white/5">
                               <div className="flex items-center gap-2 mb-1">
                                 <FolderOpen className="w-4 h-4 text-cyan-400" />
-                                <span className="text-xs text-gray-400">Projects</span>
+                                <span className="text-xs text-gray-400">
+                                  Projects
+                                </span>
                               </div>
-                              <p className="text-2xl font-bold text-white">{userStats.totalProjects}</p>
+                              <p className="text-2xl font-bold text-white">
+                                {userStats.totalProjects}
+                              </p>
                             </div>
                             <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-white/5">
                               <div className="flex items-center gap-2 mb-1">
                                 <Share2 className="w-4 h-4 text-purple-400" />
-                                <span className="text-xs text-gray-400">Public</span>
+                                <span className="text-xs text-gray-400">
+                                  Public
+                                </span>
                               </div>
-                              <p className="text-2xl font-bold text-white">{userStats.publicProjects}</p>
+                              <p className="text-2xl font-bold text-white">
+                                {userStats.publicProjects}
+                              </p>
                             </div>
                           </div>
                         </div>
-                        
+
                         {/* Actions Section */}
                         <div className="p-3">
                           <button
@@ -285,7 +301,9 @@ const About = () => {
                             </div>
                             <div className="flex-1">
                               <p className="font-semibold text-sm">Logout</p>
-                              <p className="text-xs text-gray-400">Sign out of your account</p>
+                              <p className="text-xs text-gray-400">
+                                Sign out of your account
+                              </p>
                             </div>
                           </button>
                         </div>
@@ -309,7 +327,7 @@ const About = () => {
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold font-heading bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-cyan-200 mb-6">
-            About Us
+            about us
           </h2>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto">
             We're building the future of collaborative design, where creativity
@@ -513,9 +531,9 @@ const About = () => {
                 </h3>
               </div>
               <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
-                We're constantly improving and adding new features based on
-                your feedback. Join us on this journey to revolutionize the way
-                we design and collaborate.
+                We're constantly improving and adding new features based on your
+                feedback. Join us on this journey to revolutionize the way we
+                design and collaborate.
               </p>
               <motion.div
                 whileHover={{ scale: 1.05 }}
@@ -539,4 +557,3 @@ const About = () => {
 };
 
 export default About;
-

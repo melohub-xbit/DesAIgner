@@ -277,13 +277,13 @@ const AssistantPanel = ({ projectId }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="relative">
+        <div className="">
           <textarea
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="e.g. Create a 4-step onboarding flow with arrows"
             rows={3}
-            className="resize-none rounded-xl border border-white/10 bg-black/40 px-3 py-3 text-sm text-gray-100 shadow-inner focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
+            className="w-full resize-none rounded-xl border border-white/10 bg-black/40 px-3 py-3 text-sm text-gray-100 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
           />
           {isLoading && (
             <Loader2 className="absolute bottom-3 right-3 h-4 w-4 animate-spin text-cyan-300" />
