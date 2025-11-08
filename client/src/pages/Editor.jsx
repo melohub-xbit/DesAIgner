@@ -10,6 +10,7 @@ import Sidebar from "../components/editor/Sidebar";
 import PropertiesPanel from "../components/editor/PropertiesPanel";
 import PixiCanvas from "../components/editor/PixiCanvas";
 import CollaboratorCursors from "../components/editor/CollaboratorCursors";
+import AIAssistantPanel from "../components/editor/AssistantPanel";
 
 const GRID_MINOR = 25;
 
@@ -31,6 +32,7 @@ const Editor = () => {
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAssistantOpen, setAssistantOpen] = useState(false);
   const saveTimeoutRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -42,42 +44,55 @@ const Editor = () => {
     loadProject();
     setupSocketListeners();
 
-    // Keyboard shortcuts
+    // Keyboard shortcuts - All require Ctrl+Alt
     const handleKeyDown = (e) => {
+      // Check if Ctrl+Alt (or Cmd+Alt on Mac) is pressed
+      const isModifierPressed = (e.ctrlKey || e.metaKey) && e.altKey;
+      
+      if (!isModifierPressed) {
+        return; // Ignore if modifiers not pressed
+      }
+
       const { setActiveTool, undo, redo, deleteSelected } =
         useEditorStore.getState();
 
-      // Tool shortcuts
+      // Tool shortcuts (Ctrl+Alt+key)
       if (e.key === "v" || e.key === "V") {
+        e.preventDefault();
         setActiveTool("select");
       } else if (e.key === "h" || e.key === "H") {
+        e.preventDefault();
         setActiveTool("pan");
       } else if (e.key === "r" || e.key === "R") {
+        e.preventDefault();
         setActiveTool("rectangle");
       } else if (e.key === "c" || e.key === "C") {
+        e.preventDefault();
         setActiveTool("circle");
       } else if (e.key === "y" || e.key === "Y") {
+        e.preventDefault();
         setActiveTool("triangle");
       } else if (e.key === "l" || e.key === "L") {
+        e.preventDefault();
         setActiveTool("line");
       } else if (e.key === "a" || e.key === "A") {
+        e.preventDefault();
         setActiveTool("arrow");
       } else if (e.key === "t" || e.key === "T") {
+        e.preventDefault();
         setActiveTool("text");
       }
 
-      // Undo/Redo
-      if (e.ctrlKey || e.metaKey) {
-        if (e.shiftKey && e.key === "z") {
-          e.preventDefault();
-          redo();
-        } else if (e.key === "z") {
-          e.preventDefault();
-          undo();
-        }
+      // Undo/Redo (Ctrl+Alt+Z / Ctrl+Alt+Shift+Z)
+      if (e.shiftKey && e.key === "z") {
+        e.preventDefault();
+        redo();
+      } else if (e.key === "z") {
+        e.preventDefault();
+        undo();
       }
 
-      // Delete
+      // Delete (Ctrl+Alt+Delete / Ctrl+Alt+Backspace)
       if (e.key === "Delete" || e.key === "Backspace") {
         const { selectedIds } = useEditorStore.getState();
         if (selectedIds.length > 0) {
@@ -86,7 +101,7 @@ const Editor = () => {
         }
       }
 
-      // Arrow key nudging
+      // Arrow key nudging (Ctrl+Alt+Arrow)
       if (
         e.key === "ArrowUp" ||
         e.key === "ArrowDown" ||
@@ -121,8 +136,9 @@ const Editor = () => {
         }
       }
 
-      // Escape to deselect
+      // Escape to deselect (Ctrl+Alt+Escape)
       if (e.key === "Escape") {
+        e.preventDefault();
         useEditorStore.getState().clearSelection();
         setActiveTool("select");
       }
@@ -228,10 +244,25 @@ const Editor = () => {
 
   if (loading) {
     return (
-      <div className="h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-          <p className="text-gray-400">Loading project...</p>
+      <div className="h-screen bg-black flex items-center justify-center relative overflow-hidden">
+        {/* Animated Background */}
+        <div className="fixed inset-0 bg-grid-white/[0.02] pointer-events-none" />
+        <div className="fixed inset-0 bg-gradient-to-br from-blue-950/20 via-purple-950/10 to-pink-950/20 pointer-events-none" />
+        
+        <div className="text-center relative z-10">
+          <div className="relative inline-block mb-8">
+            <div className="w-20 h-20 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+            <div
+              className="absolute inset-0 w-20 h-20 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"
+              style={{
+                animationDirection: "reverse",
+                animationDuration: "1.5s",
+              }}
+            />
+          </div>
+          <p className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 text-xl font-semibold animate-pulse">
+            Loading your canvas...
+          </p>
         </div>
       </div>
     );
@@ -242,7 +273,11 @@ const Editor = () => {
   };
 
   return (
-    <div className="h-screen bg-gray-900 flex flex-col overflow-hidden">
+    <div className="h-screen bg-black text-white flex flex-col overflow-hidden relative">
+      {/* Animated Background */}
+      <div className="fixed inset-0 bg-grid-white/[0.02] pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-blue-950/20 via-purple-950/10 to-pink-950/20 pointer-events-none" />
+      
       <Toolbar
         project={project}
         projectId={projectId}
@@ -279,6 +314,12 @@ const Editor = () => {
         <div className="absolute right-0 top-0 bottom-0 z-10">
           <PropertiesPanel projectId={projectId} />
         </div>
+
+        <AIAssistantPanel
+          isOpen={isAssistantOpen}
+          onClose={() => setAssistantOpen(false)}
+          projectId={projectId}
+        />
       </div>
     </div>
   );

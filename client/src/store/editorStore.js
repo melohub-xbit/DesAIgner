@@ -7,7 +7,7 @@ export const useEditorStore = create((set, get) => ({
   canvasSettings: {
     width: 1920,
     height: 1080,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#ffffff",
     gridEnabled: true,
     snapToGrid: false,
   },
@@ -35,24 +35,20 @@ export const useEditorStore = create((set, get) => ({
     get().saveHistory();
   },
 
-  addElementsBatch: (newElements) => {
-    if (!Array.isArray(newElements) || newElements.length === 0) {
-      return;
-    }
-
-    const sanitized = newElements.filter(Boolean);
-    if (sanitized.length === 0) {
-      return;
-    }
-
+  addElementsBatch: (elementsToAdd) => {
     const { elements } = get();
-    set({
-      elements: [...elements, ...sanitized],
-      selectedIds: sanitized
-        .map((element) => element?.id)
-        .filter((id) => typeof id === "string" && id.length > 0),
-    });
+    const additions = Array.isArray(elementsToAdd)
+      ? elementsToAdd.filter(Boolean)
+      : [];
+
+    if (additions.length === 0) {
+      return elements;
+    }
+
+    const nextElements = [...elements, ...additions];
+    set({ elements: nextElements });
     get().saveHistory();
+    return nextElements;
   },
 
   updateElement: (id, updates) => {

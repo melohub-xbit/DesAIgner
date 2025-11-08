@@ -111,7 +111,9 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.code === "Space" && !panModifierRef.current) {
+      // Space key for panning now requires Ctrl+Alt+Space
+      const isModifierPressed = (event.ctrlKey || event.metaKey) && event.altKey;
+      if (event.code === "Space" && isModifierPressed && !panModifierRef.current) {
         panModifierRef.current = true;
         if (!panStateRef.current.active && canvasRef.current) {
           canvasRef.current.style.cursor = "grab";
@@ -121,7 +123,9 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
     };
 
     const handleKeyUp = (event) => {
-      if (event.code === "Space") {
+      // Space key for panning now requires Ctrl+Alt+Space
+      const isModifierPressed = (event.ctrlKey || event.metaKey) && event.altKey;
+      if (event.code === "Space" && isModifierPressed) {
         panModifierRef.current = false;
         if (!panStateRef.current.active && canvasRef.current) {
           const shouldGrab = activeToolRef.current === "pan";
@@ -132,6 +136,9 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
             : "crosshair";
         }
         event.preventDefault();
+      } else if (event.code === "Space" && !isModifierPressed) {
+        // Reset if Space is released without modifiers
+        panModifierRef.current = false;
       }
     };
 
@@ -1536,13 +1543,6 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
       gridLayer.moveTo(0, posY);
       gridLayer.lineTo(width, posY);
     }
-
-    const originScreen = worldToScreen({ x: 0, y: 0 });
-    if (originScreen) {
-      gridLayer.lineStyle(2, 0xffffff, 0.15);
-      gridLayer.drawRect(originScreen.x - 1, 0, 2, height);
-      gridLayer.drawRect(0, originScreen.y - 1, width, 2);
-    }
   };
 
   const toWorldCoordinates = (point) => {
@@ -1619,7 +1619,7 @@ const PixiCanvas = forwardRef(({ projectId }, ref) => {
     // Get canvas dimensions from settings
     const canvasWidth = canvasSettings.width || 1920;
     const canvasHeight = canvasSettings.height || 1080;
-    const backgroundColor = canvasSettings.backgroundColor || "#f5f5f5";
+    const backgroundColor = canvasSettings.backgroundColor || "#ffffff";
 
     // Calculate bounds of all visible elements
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
